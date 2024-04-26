@@ -1,0 +1,42 @@
+service: moonenv-server
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: provided.al2023
+  stage: ${opt:stage}
+  region: ap-southeast-2
+  environment:
+    S3Bucket: "moonenv-bucket-dev"
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "s3:ListBucket"
+          Resource:
+            - "arn:aws:s3:::${self.provider.environment.S3Bucket}"
+        - Effect: "Allow"
+          Action:
+            - "s3:PutObject"
+            - "s3:GetObject"
+          Resource:
+            - "arn:aws:s3:::${self.provider.environment.S3Bucket}/*"
+
+package:
+  patterns:
+    - "!*/**"
+    - "bin/**"
+
+functions:
+  - bucketFunc:
+      handler: bin/main
+      events:
+        - http:
+            method: GET
+            path: listObjects
+            cors: true
+        - http:
+            method: POST
+            path: createObject
+            cors: true
