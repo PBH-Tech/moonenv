@@ -30,7 +30,7 @@ package:
 
 functions:
   - bucketFunc:
-      handler: bin/main
+      handler: endpoints/bucket-s3/main
       events:
         - http:
             method: GET

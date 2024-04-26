@@ -1,10 +1,14 @@
 .PHONY: build run clean
 
 build:
-	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bootstrap main.go
+	$(call buildFile, "./endpoints/bucket-s3")
 
 run: build
 	sls deploy --stage dev
 
 clean:
 	sls remove --stage dev
+
+define buildFile
+	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${1}/bootstrap ${1}/main.go
+endef
