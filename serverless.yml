@@ -7,7 +7,7 @@ provider:
   stage: ${opt:stage}
   region: ap-southeast-2
   environment:
-    S3Bucket: "moonenv-bucket-dev"
+    S3Bucket: "moonenv-bucket-dev" ## TODO: Make it as build options
   iam:
     role:
       statements:
@@ -15,13 +15,13 @@ provider:
           Action:
             - "s3:ListBucket"
           Resource:
-            - "arn:aws:s3:::${self.provider.environment.S3Bucket}"
+            - arn:aws:s3:::${self:provider.environment.S3Bucket}
         - Effect: "Allow"
           Action:
             - "s3:PutObject"
             - "s3:GetObject"
           Resource:
-            - "arn:aws:s3:::${self.provider.environment.S3Bucket}/*"
+            - arn:aws:s3:::${self:provider.environment.S3Bucket}/*
 
 package:
   patterns:

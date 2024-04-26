@@ -31,7 +31,7 @@ func handler(ctx context.Context, req handle.Request) (handle.Response, error) {
 	case http.MethodGet:
 		return handle.ApiResponse(http.StatusOK, "GET")
 	case http.MethodPost:
-		return handle.ApiResponse(http.StatusCreated, "POST")
+		return handle.UploadToS3Bucket(ctx, req, s3Client)
 	default:
 		return handle.UnhandledMethod()
 	}
