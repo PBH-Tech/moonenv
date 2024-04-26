@@ -1,4 +1,4 @@
-module github.com/JoaoVitorTeixeira/moonenv-server
+module github.com/PBH-Tech/moonenv-server
 
 go 1.22.2
 

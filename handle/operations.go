@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -32,6 +33,40 @@ type FileData struct {
 
 func UnhandledMethod() (Response, error) {
 	return ApiResponse(http.StatusMethodNotAllowed, "Method not allowed")
+}
+
+func GetObjectFromS3Bucket(ctx context.Context, req Request, s3Client *s3.Client) (Response, error) {
+	if ctx.Err() != nil {
+		return ApiResponse(http.StatusRequestTimeout, "Request Canceled")
+	}
+
+	key, found := req.QueryStringParameters["key"]
+
+	if !found {
+		return ApiResponse(http.StatusBadRequest, "Query parameter 'key' is required")
+	}
+
+	input := &s3.GetObjectInput{
+		Bucket: &bucketName,
+		Key:    &key,
+	}
+
+	result, getErr := s3Client.GetObject(ctx, input)
+
+	if getErr != nil {
+		return ApiResponse(http.StatusInternalServerError, "Failed to get object from s3")
+	}
+
+	defer result.Body.Close()
+	body, err := io.ReadAll(result.Body)
+
+	if err != nil {
+		return ApiResponse(http.StatusInternalServerError, "Failed to download object from s3")
+	}
+
+	bodyResp := map[string]string{"file": base64.StdEncoding.EncodeToString(body)}
+
+	return ApiResponse(http.StatusOK, bodyResp)
 }
 
 func UploadToS3Bucket(ctx context.Context, req Request, s3Client *s3.Client) (Response, error) {

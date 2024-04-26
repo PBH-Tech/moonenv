@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/JoaoVitorTeixeira/moonenv-server/handle"
+	"github.com/PBH-Tech/moonenv-server/handle"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -29,7 +29,7 @@ func handler(ctx context.Context, req handle.Request) (handle.Response, error) {
 
 	switch req.HTTPMethod {
 	case http.MethodGet:
-		return handle.ApiResponse(http.StatusOK, "GET")
+		return handle.GetObjectFromS3Bucket(ctx, req, s3Client)
 	case http.MethodPost:
 		return handle.UploadToS3Bucket(ctx, req, s3Client)
 	default:
