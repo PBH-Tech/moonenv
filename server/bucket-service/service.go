@@ -24,6 +24,10 @@ type UploadFileData struct {
 	ObjName string
 }
 
+type DownloadFileData struct {
+	Key string
+}
+
 func GetObjectFromS3Bucket(ctx context.Context, s3Client *s3.Client, key string) (string, error) {
 	input := &s3.GetObjectInput{
 		Bucket: &bucketName,
