@@ -11,6 +11,5 @@ clean:
 	sls remove --stage dev
 
 define buildFile
-	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/${1}/bootstrap ${1}/main.go \
-	&& zip -j bin/${1}/main.zip bin/${1}/bootstrap
+	env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o .bin/${1}/bootstrap ${1}/main.go
 endef

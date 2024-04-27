@@ -2,9 +2,12 @@ service: moonenv-server
 frameworkVersion: "3"
 configValidationMode: error
 
+plugins:
+  - serverless-go-plugin
+
 provider:
   name: aws
-  runtime: provided.al2023
+  runtime: provided.al2
   architecture: arm64
   stage: ${opt:stage}
   region: ap-southeast-2
@@ -25,17 +28,15 @@ provider:
           Resource:
             - arn:aws:s3:::${self:provider.environment.S3Bucket}/*
 
-package:
-  patterns:
-    - "!*/**"
-    - "bin/**"
-  individually: true
+custom:
+  go:
+    supportedRuntimes: ['provided.al2']
+    buildProvidedRuntimeAsBootstrap: true
+    cmd: GOARCH=arm64 GOOS=linux go build -tags lambda.norpc -ldflags="-s -w"
 
 functions:
   - bucketFunc:
-      handler: bootstrap
-      package:
-        artifact: bin/endpoints/bucket-s3/main.zip
+      handler: ./endpoints/bucket-s3
       events:
         - http:
             method: GET
@@ -46,9 +47,7 @@ functions:
             path: createObject
             cors: true
   - orchestrator:
-      handler: bootstrap
-      package:
-        artifact: bin/endpoints/bucket-s3/main.zip
+      handler: ./endpoints/orchestrator
       environment:
         AwsRegion: ${self:provider.region}
         BucketFuncName: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:bucketFunc

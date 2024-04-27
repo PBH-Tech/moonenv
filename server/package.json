@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "serverless-go-plugin": "^2.4.0"
+  },
+  "dependencies": {
+    "glob": "^10.3.12" // TODO: https://github.com/mthenw/serverless-go-plugin/issues/51
+  }
+}
