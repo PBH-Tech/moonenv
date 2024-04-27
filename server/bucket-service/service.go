@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,24 +19,12 @@ var (
 	bucketName = os.Getenv("S3Bucket")
 )
 
-type FileData struct {
-	B64Str  string `json:"b64String"`
-	ObjName string `json:"objectName"`
+type UploadFileData struct {
+	B64Str  string
+	ObjName string
 }
 
-func GetObjectFromS3Bucket(ctx context.Context, req handle.Request, s3Client *s3.Client) (handle.Response, error) {
-	status, _ := handle.CheckRequestStatus(ctx)
-
-	if status != nil {
-		return *status, nil
-	}
-
-	key, found := req.QueryStringParameters["key"]
-
-	if !found {
-		return handle.ApiResponse(http.StatusBadRequest, "Query parameter 'key' is required")
-	}
-
+func GetObjectFromS3Bucket(ctx context.Context, s3Client *s3.Client, key string) (string, error) {
 	input := &s3.GetObjectInput{
 		Bucket: &bucketName,
 		Key:    &key,
@@ -44,22 +33,20 @@ func GetObjectFromS3Bucket(ctx context.Context, req handle.Request, s3Client *s3
 	result, getErr := s3Client.GetObject(ctx, input)
 
 	if getErr != nil {
-		return handle.ApiResponse(http.StatusInternalServerError, "Failed to get object from s3")
+		return "", errors.New("failed to get object from s3")
 	}
 
 	defer result.Body.Close()
 	body, err := io.ReadAll(result.Body)
 
 	if err != nil {
-		return handle.ApiResponse(http.StatusInternalServerError, "Failed to download object from s3")
+		return "", errors.New("failed to download object from s3")
 	}
 
-	bodyResp := map[string]string{"file": base64.StdEncoding.EncodeToString(body)}
-
-	return handle.ApiResponse(http.StatusOK, bodyResp)
+	return base64.StdEncoding.EncodeToString(body), nil
 }
 
-func UploadToS3Bucket(ctx context.Context, fileData FileData, s3Client *s3.Client) (handle.Response, error) {
+func UploadToS3Bucket(ctx context.Context, fileData UploadFileData, s3Client *s3.Client) (handle.Response, error) {
 	content, decErr := base64.StdEncoding.DecodeString(fileData.B64Str)
 
 	if decErr != nil {

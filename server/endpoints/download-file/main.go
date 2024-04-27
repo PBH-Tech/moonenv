@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
-	"net/http"
+	"errors"
 
 	bucketService "github.com/PBH-Tech/moonenv/bucket-service"
-	"github.com/PBH-Tech/moonenv/handle"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -19,15 +18,14 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, event *bucketService.UploadFileData) (handle.Response, error) {
+func handler(ctx context.Context, event *bucketService.DownloadFileData) (string, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 
 	if err != nil {
-		return handle.ApiResponse(http.StatusInternalServerError, "Failed to load SDK Configuration")
+		return "", errors.New("failed to load SDK Configuration")
 	}
 
 	s3Client = s3.NewFromConfig(cfg)
 
-	return bucketService.UploadToS3Bucket(ctx, *event, s3Client)
-
+	return bucketService.GetObjectFromS3Bucket(ctx, s3Client, event.Key)
 }

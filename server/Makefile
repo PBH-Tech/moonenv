@@ -2,6 +2,7 @@
 
 build:
 	$(call buildFile,"endpoints/upload-file") \
+	&& $(call buildFile,"endpoints/download-file") \
 	&& $(call buildFile,"endpoints/orchestrator")
 
 run: build
