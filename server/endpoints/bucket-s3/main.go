@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	bucketService "github.com/PBH-Tech/moonenv-server/bucket-service"
 	"github.com/PBH-Tech/moonenv-server/handle"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -29,9 +30,9 @@ func handler(ctx context.Context, req handle.Request) (handle.Response, error) {
 
 	switch req.HTTPMethod {
 	case http.MethodGet:
-		return handle.GetObjectFromS3Bucket(ctx, req, s3Client)
+		return bucketService.GetObjectFromS3Bucket(ctx, req, s3Client)
 	case http.MethodPost:
-		return handle.UploadToS3Bucket(ctx, req, s3Client)
+		return bucketService.UploadToS3Bucket(ctx, req, s3Client)
 	default:
 		return handle.UnhandledMethod()
 	}

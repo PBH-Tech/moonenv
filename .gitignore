@@ -11,6 +11,7 @@
 *.dll
 *.so
 *.dylib
+**/bin
 
 # Test binary, built with `go test -c`
 *.test
@@ -241,7 +242,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-
-bootstrap
 
 # End of https://www.toptal.com/developers/gitignore/api/go,serverless,macos,linux,windows,node

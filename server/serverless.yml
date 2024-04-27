@@ -1,9 +1,11 @@
 service: moonenv-server
 frameworkVersion: "3"
+configValidationMode: error
 
 provider:
   name: aws
   runtime: provided.al2023
+  architecture: arm64
   stage: ${opt:stage}
   region: ap-southeast-2
   environment:
@@ -27,10 +29,13 @@ package:
   patterns:
     - "!*/**"
     - "bin/**"
+  individually: true
 
 functions:
   - bucketFunc:
-      handler: endpoints/bucket-s3/main
+      handler: bootstrap
+      package:
+        artifact: bin/endpoints/bucket-s3/main.zip
       events:
         - http:
             method: GET
@@ -39,4 +44,16 @@ functions:
         - http:
             method: POST
             path: createObject
+            cors: true
+  - orchestrator:
+      handler: bootstrap
+      package:
+        artifact: bin/endpoints/bucket-s3/main.zip
+      environment:
+        AwsRegion: ${self:provider.region}
+        BucketFuncName: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:bucketFunc
+      events:
+        - http:
+            method: POST
+            path: sendPushEnv
             cors: true
