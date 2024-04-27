@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/PBH-Tech/moonenv-server/handle"
-	orchestratorService "github.com/PBH-Tech/moonenv-server/orchestrator-service"
+	bucketService "github.com/PBH-Tech/moonenv/bucket-service"
+	"github.com/PBH-Tech/moonenv/handle"
+	orchestratorService "github.com/PBH-Tech/moonenv/orchestrator-service"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -34,7 +35,7 @@ func handler(ctx context.Context, req handle.Request) (handle.Response, error) {
 
 	newSession := session.Must(session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable}))
 	client := lambdaSdk.New(newSession, &aws.Config{Region: aws.String(os.Getenv("AwsRegion"))})
-	request := handle.FileData{B64Str: commandData.B64Str, ObjName: fmt.Sprintf("%s/%s/%s", commandData.Org, commandData.Repo, commandData.Env)}
+	request := bucketService.FileData{B64Str: commandData.B64Str, ObjName: fmt.Sprintf("%s/%s/%s", commandData.Org, commandData.Repo, commandData.Env)}
 
 	payload, err := json.Marshal(request)
 

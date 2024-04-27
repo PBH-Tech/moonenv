@@ -1,4 +1,4 @@
-service: moonenv-server
+service: moonenv
 frameworkVersion: "3"
 configValidationMode: error
 
@@ -27,6 +27,12 @@ provider:
             - "s3:GetObject"
           Resource:
             - arn:aws:s3:::${self:provider.environment.S3Bucket}/*
+        - Effect: "Allow"
+          Action:
+            - lambda:InvokeFunction
+            - lambda:InvokeAsync
+          Resource:
+            - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-uploadFile
 
 custom:
   go:
@@ -35,22 +41,14 @@ custom:
     cmd: GOARCH=arm64 GOOS=linux go build -tags lambda.norpc -ldflags="-s -w"
 
 functions:
-  - bucketFunc:
-      handler: ./endpoints/bucket-s3
-      events:
-        - http:
-            method: GET
-            path: listObjects
-            cors: true
-        - http:
-            method: POST
-            path: createObject
-            cors: true
+  - uploadFile:
+      handler: ./endpoints/upload-file
+
   - orchestrator:
       handler: ./endpoints/orchestrator
       environment:
         AwsRegion: ${self:provider.region}
-        BucketFuncName: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:bucketFunc
+        BucketFuncName: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-uploadFile
       events:
         - http:
             method: POST

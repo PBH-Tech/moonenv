@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	bucketService "github.com/PBH-Tech/moonenv-server/bucket-service"
-	"github.com/PBH-Tech/moonenv-server/handle"
+	bucketService "github.com/PBH-Tech/moonenv/bucket-service"
+	"github.com/PBH-Tech/moonenv/handle"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -19,7 +19,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, req handle.Request) (handle.Response, error) {
+func handler(ctx context.Context, event *bucketService.FileData) (handle.Response, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 
 	if err != nil {
@@ -28,12 +28,6 @@ func handler(ctx context.Context, req handle.Request) (handle.Response, error) {
 
 	s3Client = s3.NewFromConfig(cfg)
 
-	switch req.HTTPMethod {
-	case http.MethodGet:
-		return bucketService.GetObjectFromS3Bucket(ctx, req, s3Client)
-	case http.MethodPost:
-		return bucketService.UploadToS3Bucket(ctx, req, s3Client)
-	default:
-		return handle.UnhandledMethod()
-	}
+	return bucketService.UploadToS3Bucket(ctx, *event, s3Client)
+
 }

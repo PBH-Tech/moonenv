@@ -1,7 +1,7 @@
 .PHONY: build run clean
 
 build:
-	$(call buildFile,"endpoints/bucket-s3") \
+	$(call buildFile,"endpoints/upload-file") \
 	&& $(call buildFile,"endpoints/orchestrator")
 
 run: build

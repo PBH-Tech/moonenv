@@ -1,4 +1,4 @@
-module github.com/PBH-Tech/moonenv-server
+module github.com/PBH-Tech/moonenv
 
 go 1.22.2
 

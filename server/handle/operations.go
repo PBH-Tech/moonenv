@@ -14,11 +14,6 @@ type ObjKey struct {
 	Key string `json:"objectKey"`
 }
 
-type FileData struct {
-	B64Str  string `json:"b64String"`
-	ObjName string `json:"objectName"`
-}
-
 func UnhandledMethod() (Response, error) {
 	return ApiResponse(http.StatusMethodNotAllowed, "Method not allowed")
 }
