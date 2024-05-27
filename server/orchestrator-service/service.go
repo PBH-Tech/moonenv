@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	bucketService "github.com/PBH-Tech/moonenv/bucket-service"
 	"github.com/PBH-Tech/moonenv/handle"
@@ -46,8 +47,17 @@ func PullCommand(req handle.Request) (handle.Response, error) {
 	return handle.ApiResponse(http.StatusOK, map[string]string{"file": response})
 }
 
+func getHeader(headers map[string]string, key string) string {
+	for hKey, hValue := range headers {
+		if strings.EqualFold(hKey, key) {
+			return hValue
+		}
+	}
+	return ""
+}
+
 func PushCommand(req handle.Request) (handle.Response, error) {
-	if req.Headers["Content-Type"] != "application/json" {
+	if getHeader(req.Headers, "content-type") != "application/json" {
 		return handle.ApiResponse(http.StatusBadRequest, "Invalid request type")
 	}
 
