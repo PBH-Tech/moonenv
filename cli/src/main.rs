@@ -1,8 +1,11 @@
-use clap::{Parser, Subcommand, Args, ValueEnum};
+use clap::{ Args, Parser, Subcommand, ValueEnum};
 use anyhow::{Context, Result};
 use serde::{Deserialize,Serialize};
 use serde_json::json;
 use base64::prelude::*;
+use std::fmt;
+use std::io::Write;
+use std::fs::File;
 use reqwest::{Client, header::CONTENT_TYPE};
 
 /// Manages environment helping saving and pulling it
@@ -17,6 +20,10 @@ struct PushResponse {
     message: String
 }
 
+#[derive(Deserialize, Debug)]
+struct PullResponse {
+    file: String
+}
 
 #[derive(Subcommand, Debug)]
 enum Command {
@@ -32,6 +39,16 @@ enum Environment {
     Dev,
     Qa,
     Prod,
+}
+
+impl fmt::Display for Environment {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Environment::Dev => write!(f, "Dev"),
+            Environment::Qa => write!(f, "Qa"),
+            Environment::Prod => write!(f, "Prod"),
+        }
+    }
 }
 
 #[derive(Args, Debug)]
@@ -62,14 +79,24 @@ fn main() -> Result<()> {
 
 #[tokio::main]
 async fn pull_handler(value: RepoActionEnvArgs)-> Result<()>{
-    println!("Pull: {:?}", value);
+    let path = "./.env"; // TODO: Turn path as an optional field
+    let request_url = format!("https://t5m17jo2d8.execute-api.ap-southeast-2.amazonaws.com/dev/sendPullEnv?org={}&repo={}&env={}", value.org, value.repository, value.env);
+    let response = Client::new().get(request_url).send().await?;
 
+    response.error_for_status_ref()?;
+
+    let result: PullResponse = response.json().await?;
+    let env = BASE64_STANDARD.decode(result.file).expect("Failed to decode base64 data");
+    let mut file = File::create(path)?;
+
+    file.write_all(&env)?;
+    
     Ok(())
 }
 
 #[tokio::main]
 async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
-    let path = "./.env";
+    let path = "./.env"; // TODO: Turn path as an optional field
     let content = std::fs::read_to_string(path).with_context(|| format!("could not read file `{}`", path))?;
     let request_url = "https://t5m17jo2d8.execute-api.ap-southeast-2.amazonaws.com/dev/sendPushEnv"; // TODO: Convert to environment variable
     let request_body = json!({
