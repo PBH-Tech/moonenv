@@ -1,5 +1,5 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::fmt;
 
 /// Manages environment helping saving and pulling it
@@ -9,16 +9,6 @@ pub struct App {
     pub command: Command,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct PushResponse {
-    pub message: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct PullResponse {
-    pub file: String,
-}
-
 #[derive(Subcommand, Debug)]
 pub enum Command {
     /// Pulls the .env from the indicated repository
@@ -26,6 +16,10 @@ pub enum Command {
 
     /// Pushed the .env file located on the path where the command has been executed to the repository
     Push(RepoActionEnvArgs),
+
+    #[clap(subcommand)]
+    /// Changes the application's configuration settings.
+    Config(ConfigVariableOptions),
 }
 
 #[derive(Clone, ValueEnum, Debug, Serialize)]
@@ -55,4 +49,32 @@ pub struct RepoActionEnvArgs {
 
     /// Environment where to find the .env file
     pub env: Environment,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ConfigVariableOptions {
+    /// Creates or updates a profile with specified settings.
+    /// Use this command to either create a new profile or update an existing one with new values.
+    Upsert(ConfigVariableUpsert),
+
+    /// Sets the currently selected profile as the default for the application.
+    /// This command will modify the application's settings so that the specified profile
+    Default(ConfigVariableChangeDefault),
+}
+
+#[derive(Args, Debug)]
+pub struct ConfigVariableUpsert {
+    /// A friendly name for identifying this configuration.
+    pub name: String,
+
+    #[clap(short, long)]
+    /// The full URL to the server.
+    /// If provided, it should be a valid URL format, e.g., "https://example.com".
+    pub url: Option<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct ConfigVariableChangeDefault {
+    /// The name of the profile to set as default.
+    pub name: String,
 }
