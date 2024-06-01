@@ -45,16 +45,19 @@ fn get_config_path() -> PathBuf {
     return config_path.clone();
 }
 
-pub fn get_config() -> Result<MoonenvConfig, ConfyError> {
-    // Construct the path to the configuration file
+fn get_config() -> Result<MoonenvConfig, ConfyError> {
     let config_path = get_config_path();
 
     return confy::load_path(config_path);
 }
 
+fn save_config(moonenv_config: MoonenvConfig) {
+    let config_path = get_config_path();
+    let _ = confy::store_path(config_path, moonenv_config);
+}
+
 pub fn change_config(new_config: IndividualConfig) -> Result<()> {
     let mut moonenv_config = get_config()?;
-    let config_path = get_config_path();
     let config_name = new_config.name.clone();
 
     if let Some(individual_config) = moonenv_config
@@ -70,9 +73,17 @@ pub fn change_config(new_config: IndividualConfig) -> Result<()> {
         moonenv_config.profile.push(new_config.clone());
     }
 
-    let _ = confy::store_path(config_path, moonenv_config);
+    save_config(moonenv_config);
 
-    println!("New config is set: {:?}", new_config);
+    Ok(())
+}
+
+pub fn set_default(name: String) -> Result<()> {
+    let mut moonenv_config = get_config()?;
+
+    moonenv_config.default = Some(name);
+
+    save_config(moonenv_config);
 
     Ok(())
 }
