@@ -1,10 +1,21 @@
-use crate::cli_struct::{PullResponse, PushResponse, RepoActionEnvArgs};
+use crate::cli_struct::RepoActionEnvArgs;
 use anyhow::{Context, Result};
 use base64::prelude::*;
 use reqwest::{header::CONTENT_TYPE, Client};
+use serde::Deserialize;
 use serde_json::json;
 use std::fs::File;
 use std::io::Write;
+
+#[derive(Deserialize, Debug)]
+pub struct PushResponse {
+    pub message: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct PullResponse {
+    pub file: String,
+}
 
 #[tokio::main]
 pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
