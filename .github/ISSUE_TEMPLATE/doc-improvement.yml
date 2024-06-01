@@ -1,0 +1,36 @@
+---
+name: Documentation Improvement
+description: Suggest an idea to help us improve Moonenv documentation
+title: "[Docs]: "
+labels:
+  - "documentation"
+
+body:
+  - type: textarea
+    attributes:
+      label: What can be improved in our documentation?
+      description: |
+        Please provide a clear and concise description of what you find lacking or could be improved in the Moonenv documentation. Specify the section or aspects of the documentation where you see potential for enhancement.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Do you have an idea on how we can improve it?
+      description: |
+        If you have a specific idea or suggestion, please describe it here. Include a clear and concise description or example of how you envision the documentation after the improvement. Suggestions for new examples, clearer explanations, or additional sections are all welcome.
+    validations:
+      required: false
+
+  - type: checkboxes
+    attributes:
+      label: Have you found this issue in other parts of the documentation as well?
+      description: |
+        Please check if you have noticed similar issues in other parts of the documentation which could also benefit from similar improvements.
+      options:
+        - label: Yes, I've noticed similar issues elsewhere.
+        - label: No, this issue seems specific to the section mentioned above.
+    validations:
+      required: true
+---
+
