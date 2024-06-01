@@ -7,7 +7,7 @@ use std::{env, path::PathBuf};
 pub struct MoonenvConfig {
     pub default: Option<String>,
 
-    pub profile: Vec<IndividualConfig>,
+    pub profiles: Vec<IndividualConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -30,7 +30,7 @@ impl ::std::default::Default for MoonenvConfig {
     fn default() -> Self {
         Self {
             default: Some("default".into()),
-            profile: vec![IndividualConfig::default()],
+            profiles: vec![IndividualConfig::default()],
         }
     }
 }
@@ -61,7 +61,7 @@ pub fn change_config(new_config: IndividualConfig) -> Result<()> {
     let config_name = new_config.name.clone();
 
     if let Some(individual_config) = moonenv_config
-        .profile
+        .profiles
         .iter_mut()
         .find(|config| config.name == config_name)
     {
@@ -70,7 +70,7 @@ pub fn change_config(new_config: IndividualConfig) -> Result<()> {
             None => {}
         }
     } else {
-        moonenv_config.profile.push(new_config.clone());
+        moonenv_config.profiles.push(new_config.clone());
     }
 
     save_config(moonenv_config);
@@ -86,4 +86,24 @@ pub fn set_default(name: String) -> Result<()> {
     save_config(moonenv_config);
 
     Ok(())
+}
+
+fn get_default() -> Result<IndividualConfig> {
+    let moonenv_config = get_config()?;
+
+    let config = moonenv_config
+        .profiles
+        .iter()
+        .find(|config| Some(config.name.to_string()) == moonenv_config.default)
+        .expect("No default profile found. Ensure a default profile is correctly set in the configuration.");
+
+    Ok(config.clone())
+}
+
+pub fn get_default_url() -> Result<String> {
+    let config = get_default()?;
+
+    config.url.ok_or_else(|| {
+        anyhow::anyhow!("URL not configured in the default profile. Please set the URL to proceed.")
+    })
 }
