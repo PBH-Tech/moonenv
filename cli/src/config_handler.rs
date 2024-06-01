@@ -91,13 +91,11 @@ pub fn set_default(name: String) -> Result<()> {
 fn get_default() -> Result<IndividualConfig> {
     let moonenv_config = get_config()?;
 
-    let config = moonenv_config
+    return moonenv_config
         .profiles
         .iter()
         .find(|config| Some(config.name.to_string()) == moonenv_config.default)
-        .expect("No default profile found. Ensure a default profile is correctly set in the configuration.");
-
-    Ok(config.clone())
+        .ok_or_else(|| anyhow::anyhow!("No default profile found. Ensure a default profile is correctly set in the configuration.")).cloned();
 }
 
 pub fn get_default_url() -> Result<String> {
