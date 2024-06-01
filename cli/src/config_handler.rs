@@ -1,7 +1,8 @@
-use anyhow::Result;
-use confy::{self, ConfyError};
+use anyhow::{anyhow, Result};
+use confy::{self};
+use dirs::home_dir;
 use serde::{Deserialize, Serialize};
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MoonenvConfig {
@@ -35,25 +36,28 @@ impl ::std::default::Default for MoonenvConfig {
     }
 }
 
-fn get_config_path() -> PathBuf {
-    let home = env::var("HOME").expect("HOME environment variable not set");
+fn get_config_path() -> Result<PathBuf> {
+    let home = home_dir().ok_or_else(|| anyhow::anyhow!("HOME environment variable not set"))?;
     let mut config_path: PathBuf = PathBuf::from(home);
 
     config_path.push(".moonenv");
     config_path.push("config");
 
-    return config_path.clone();
+    Ok(config_path.clone())
 }
 
-fn get_config() -> Result<MoonenvConfig, ConfyError> {
-    let config_path = get_config_path();
+fn get_config() -> Result<MoonenvConfig> {
+    let config_path = get_config_path()?;
 
-    return confy::load_path(config_path);
+    return confy::load_path(config_path)
+        .map_err(|e| anyhow!("Failed to load configuration: {}", e));
 }
 
-fn save_config(moonenv_config: MoonenvConfig) {
-    let config_path = get_config_path();
+fn save_config(moonenv_config: MoonenvConfig) -> Result<()> {
+    let config_path: PathBuf = get_config_path()?;
     let _ = confy::store_path(config_path, moonenv_config);
+
+    Ok(())
 }
 
 pub fn change_config(new_config: IndividualConfig) -> Result<()> {
@@ -73,7 +77,7 @@ pub fn change_config(new_config: IndividualConfig) -> Result<()> {
         moonenv_config.profiles.push(new_config.clone());
     }
 
-    save_config(moonenv_config);
+    let _ = save_config(moonenv_config)?;
 
     Ok(())
 }
@@ -83,7 +87,7 @@ pub fn set_default(name: String) -> Result<()> {
 
     moonenv_config.default = Some(name);
 
-    save_config(moonenv_config);
+    let _ = save_config(moonenv_config)?;
 
     Ok(())
 }
