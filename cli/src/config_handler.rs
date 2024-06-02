@@ -62,12 +62,12 @@ fn save_config(moonenv_config: MoonenvConfig) -> Result<()> {
 
 pub fn change_config(new_config: IndividualConfig) -> Result<()> {
     let mut moonenv_config = get_config()?;
-    let config_name = new_config.org.clone();
+    let config_org = new_config.org.clone();
 
     if let Some(individual_config) = moonenv_config
         .profiles
         .iter_mut()
-        .find(|config| config.org == config_name)
+        .find(|config| config.org == config_org)
     {
         match &new_config.url {
             Some(url) => individual_config.url = Some(url.clone().to_string()),

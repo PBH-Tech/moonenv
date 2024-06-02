@@ -71,8 +71,8 @@ pub enum ConfigVariableOptions {
 
 #[derive(Args, Debug)]
 pub struct ConfigVariableUpsert {
-    /// A friendly name for identifying this configuration.
-    pub name: String,
+    /// The org identifier for this configuration.
+    pub org: String,
 
     #[clap(short, long)]
     /// The full URL to the server.
