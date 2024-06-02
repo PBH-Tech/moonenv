@@ -49,13 +49,12 @@ pub struct RepoActionEnvArgs {
 
     #[clap(short, long, default_value = "./.env")]
     /// Path to the environment variable file.
-    /// If unspecified, the default path used is `./.env`.
     pub path: std::path::PathBuf,
 
     /// The specific repository within the given organization where the `.env` file is located.
     pub repository: String,
 
-    /// Environment where to find the .env file
+    /// Environment where to find the .env file.
     pub env: Environment,
 }
 
