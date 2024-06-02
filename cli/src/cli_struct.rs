@@ -39,15 +39,22 @@ impl fmt::Display for Environment {
     }
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Clone)]
 pub struct RepoActionEnvArgs {
-    /// The organization that owns the repository. Ensure that you have the necessary access permissions.
-    pub org: String,
+    #[clap(short, long)]
+    /// The organization that owns the repository.
+    /// Make sure you have the necessary access permissions.
+    /// If unspecified, the organization name is taken from the default configuration profile.
+    pub org: Option<String>,
+
+    #[clap(short, long, default_value = "./.env")]
+    /// Path to the environment variable file.
+    pub path: std::path::PathBuf,
 
     /// The specific repository within the given organization where the `.env` file is located.
     pub repository: String,
 
-    /// Environment where to find the .env file
+    /// Environment where to find the .env file.
     pub env: Environment,
 }
 
@@ -64,8 +71,8 @@ pub enum ConfigVariableOptions {
 
 #[derive(Args, Debug)]
 pub struct ConfigVariableUpsert {
-    /// A friendly name for identifying this configuration.
-    pub name: String,
+    /// The org identifier for this configuration.
+    pub org: String,
 
     #[clap(short, long)]
     /// The full URL to the server.
