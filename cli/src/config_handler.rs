@@ -15,13 +15,13 @@ pub struct MoonenvConfig {
 pub struct IndividualConfig {
     pub url: Option<String>,
 
-    pub name: String,
+    pub org: String,
 }
 
 impl Default for IndividualConfig {
     fn default() -> Self {
         Self {
-            name: "default".to_string(),
+            org: "moonenv".to_string(),
             url: Some("www.moonenv.app".to_string()),
         }
     }
@@ -62,12 +62,12 @@ fn save_config(moonenv_config: MoonenvConfig) -> Result<()> {
 
 pub fn change_config(new_config: IndividualConfig) -> Result<()> {
     let mut moonenv_config = get_config()?;
-    let config_name = new_config.name.clone();
+    let config_name = new_config.org.clone();
 
     if let Some(individual_config) = moonenv_config
         .profiles
         .iter_mut()
-        .find(|config| config.name == config_name)
+        .find(|config| config.org == config_name)
     {
         match &new_config.url {
             Some(url) => individual_config.url = Some(url.clone().to_string()),
@@ -98,8 +98,14 @@ fn get_default() -> Result<IndividualConfig> {
     return moonenv_config
         .profiles
         .iter()
-        .find(|config| Some(config.name.to_string()) == moonenv_config.default)
+        .find(|config| Some(config.org.to_string()) == moonenv_config.default)
         .ok_or_else(|| anyhow::anyhow!("No default profile found. Ensure a default profile is correctly set in the configuration.")).cloned();
+}
+
+pub fn get_default_org() -> Result<String> {
+    let config = get_default()?;
+
+    Ok(config.org)
 }
 
 pub fn get_default_url() -> Result<String> {

@@ -1,5 +1,5 @@
 use crate::cli_struct::RepoActionEnvArgs;
-use crate::config_handler::get_default_url;
+use crate::config_handler::{get_default_org, get_default_url};
 use anyhow::{Context, Result};
 use base64::prelude::*;
 use reqwest::{header::CONTENT_TYPE, Client};
@@ -18,13 +18,21 @@ pub struct PullResponse {
     pub file: String,
 }
 
+fn get_org(value: RepoActionEnvArgs) -> Result<String> {
+    value
+        .org
+        .or(Some(get_default_org()?))
+        .ok_or_else(|| anyhow::anyhow!("Org parameter is missing"))
+}
+
 #[tokio::main]
 pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
     let url = get_default_url()?;
+    let org = get_org(value.clone())?;
     let path = "./.env"; // TODO: Turn path as an optional field
     let request_url = format!(
         "{}/sendPullEnv?org={}&repo={}&env={}",
-        url, value.org, value.repository, value.env
+        url, org, value.repository, value.env
     );
     let response = Client::new().get(request_url).send().await?;
 
@@ -45,11 +53,12 @@ pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
 pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
     let path = "./.env"; // TODO: Turn path as an optional field
     let url = get_default_url()?;
+    let org = get_org(value.clone())?;
     let content =
         std::fs::read_to_string(path).with_context(|| format!("could not read file `{}`", path))?;
     let request_url = format!("{}/sendPushEnv", url);
     let request_body = json!({
-        "org": value.org,
+        "org": org,
         "repo": value.repository,
         "env": value.env,
         "b64String": BASE64_STANDARD.encode(content)

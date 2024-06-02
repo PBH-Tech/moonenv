@@ -17,7 +17,7 @@ fn main() -> Result<()> {
         Command::Config(config_subcommand) => match config_subcommand {
             ConfigVariableOptions::Default(value) => set_default(value.name)?,
             ConfigVariableOptions::Upsert(value) => change_config(IndividualConfig {
-                name: value.name,
+                org: value.name,
                 url: value.url,
             })?,
         },

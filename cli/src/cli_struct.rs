@@ -39,10 +39,11 @@ impl fmt::Display for Environment {
     }
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Clone)]
 pub struct RepoActionEnvArgs {
+    #[clap(short, long)]
     /// The organization that owns the repository. Ensure that you have the necessary access permissions.
-    pub org: String,
+    pub org: Option<String>,
 
     /// The specific repository within the given organization where the `.env` file is located.
     pub repository: String,
