@@ -42,8 +42,15 @@ impl fmt::Display for Environment {
 #[derive(Args, Debug, Clone)]
 pub struct RepoActionEnvArgs {
     #[clap(short, long)]
-    /// The organization that owns the repository. Ensure that you have the necessary access permissions.
+    /// The organization that owns the repository.
+    /// Make sure you have the necessary access permissions.
+    /// If unspecified, the organization name is taken from the default configuration profile.
     pub org: Option<String>,
+
+    #[clap(short, long, default_value = "./.env")]
+    /// Path to the environment variable file.
+    /// If unspecified, the default path used is `./.env`.
+    pub path: std::path::PathBuf,
 
     /// The specific repository within the given organization where the `.env` file is located.
     pub repository: String,

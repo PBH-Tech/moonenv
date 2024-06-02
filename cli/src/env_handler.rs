@@ -25,11 +25,19 @@ fn get_org(value: RepoActionEnvArgs) -> Result<String> {
         .ok_or_else(|| anyhow::anyhow!("Org parameter is missing"))
 }
 
+fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
+    value
+        .path
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("Invalid env path"))
+        .and_then(|path| Ok(path.to_owned()))
+}
+
 #[tokio::main]
 pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
     let url = get_default_url()?;
     let org = get_org(value.clone())?;
-    let path = "./.env"; // TODO: Turn path as an optional field
+    let path = get_env_path(value.clone())?;
     let request_url = format!(
         "{}/sendPullEnv?org={}&repo={}&env={}",
         url, org, value.repository, value.env
@@ -51,11 +59,11 @@ pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
 
 #[tokio::main]
 pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
-    let path = "./.env"; // TODO: Turn path as an optional field
+    let path = get_env_path(value.clone())?;
     let url = get_default_url()?;
     let org = get_org(value.clone())?;
-    let content =
-        std::fs::read_to_string(path).with_context(|| format!("could not read file `{}`", path))?;
+    let content = std::fs::read_to_string(path.clone())
+        .with_context(|| format!("could not read file `{}`", path))?;
     let request_url = format!("{}/sendPushEnv", url);
     let request_body = json!({
         "org": org,
