@@ -14,7 +14,7 @@ pub enum Command {
     /// Pulls the .env from the indicated repository
     Pull(RepoActionEnvArgs),
 
-    /// Pushed the .env file located on the path where the command has been executed to the repository
+    /// Pushes the .env file located on the path where the command has been executed to the repository
     Push(RepoActionEnvArgs),
 
     #[clap(subcommand)]
