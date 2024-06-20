@@ -41,7 +41,7 @@ func PullCommand(req handle.Request) (handle.Response, error) {
 	var response string
 
 	if err := json.Unmarshal(result.Payload, &response); err != nil {
-		return handle.ApiResponse(http.StatusInternalServerError, "Failed converting JSON")
+		return handle.ApiResponse(http.StatusNotFound, "File does not exist")
 	}
 
 	return handle.ApiResponse(http.StatusOK, map[string]string{"file": response})

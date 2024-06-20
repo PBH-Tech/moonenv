@@ -1,8 +1,9 @@
 use crate::cli_struct::RepoActionEnvArgs;
 use crate::config_handler::{get_default_org, get_default_url};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use base64::prelude::*;
-use reqwest::{header::CONTENT_TYPE, Client};
+use reqwest::{header::CONTENT_TYPE, Client, Response, StatusCode};
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde_json::json;
 use std::fs::File;
@@ -33,6 +34,21 @@ fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
         .and_then(|path| Ok(path.to_owned()))
 }
 
+async fn treat_api_err<T: DeserializeOwned>(response: Response) -> Result<T> {
+    if let Err(err) = response.error_for_status_ref() {
+        let status = err.status();
+        let text = response.text().await?;
+
+        return Err(anyhow!(
+            "Request failed with status {}: {}",
+            status.unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
+            text
+        ));
+    }
+
+    Ok(response.json::<T>().await?)
+}
+
 #[tokio::main]
 pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
     let url = get_default_url()?;
@@ -42,13 +58,12 @@ pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
         "{}/sendPullEnv?org={}&repo={}&env={}",
         url, org, value.repository, value.env
     );
-    let response = Client::new().get(request_url).send().await?;
 
-    response.error_for_status_ref()?;
+    let result =
+        treat_api_err::<PullResponse>(Client::new().get(&request_url).send().await?).await?;
 
-    let result: PullResponse = response.json().await?;
     let env = BASE64_STANDARD
-        .decode(result.file)
+        .decode(&result.file)
         .expect("Failed to decode base64 data");
     let mut file = File::create(path)?;
 
@@ -71,16 +86,16 @@ pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
         "env": value.env,
         "b64String": BASE64_STANDARD.encode(content)
     });
-    let response = Client::new()
-        .post(request_url)
-        .header(CONTENT_TYPE, "application/json")
-        .json(&request_body)
-        .send()
-        .await?;
 
-    response.error_for_status_ref()?;
-
-    let result: PushResponse = response.json().await?;
+    let result = treat_api_err::<PushResponse>(
+        Client::new()
+            .post(request_url)
+            .header(CONTENT_TYPE, "application/json")
+            .json(&request_body)
+            .send()
+            .await?,
+    )
+    .await?;
 
     println!("{}", result.message);
 
