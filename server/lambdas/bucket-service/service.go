@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/PBH-Tech/moonenv/handle"
+	"github.com/PBH-Tech/moonenv/lambdas/handle"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	bucketService "github.com/PBH-Tech/moonenv/bucket-service"
-	"github.com/PBH-Tech/moonenv/handle"
+	bucketService "github.com/PBH-Tech/moonenv/lambdas/bucket-service"
+	"github.com/PBH-Tech/moonenv/lambdas/handle"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"

@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-type Request events.APIGatewayProxyRequest
-type Response events.APIGatewayProxyResponse
+type Request events.APIGatewayV2HTTPRequest
+type Response events.APIGatewayV2HTTPResponse
 
 type ObjKey struct {
 	Key string `json:"objectKey"`
