@@ -55,7 +55,7 @@ pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
     let org = get_org(value.clone())?;
     let path = get_env_path(value.clone())?;
     let request_url = format!(
-        "{}/sendPullEnv?org={}&repo={}&env={}",
+        "{}/orgs/{}/repos/{}?env={}",
         url, org, value.repository, value.env
     );
 
@@ -79,11 +79,11 @@ pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
     let org = get_org(value.clone())?;
     let content = std::fs::read_to_string(path.clone())
         .with_context(|| format!("could not read file `{}`", path))?;
-    let request_url = format!("{}/sendPushEnv", url);
+    let request_url = format!(
+        "{}/orgs/{}/repos/{}?env={}",
+        url, org, value.repository, value.env,
+    );
     let request_body = json!({
-        "org": org,
-        "repo": value.repository,
-        "env": value.env,
         "b64String": BASE64_STANDARD.encode(content)
     });
 
