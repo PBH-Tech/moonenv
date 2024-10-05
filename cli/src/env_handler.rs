@@ -49,15 +49,20 @@ async fn treat_api_err<T: DeserializeOwned>(response: Response) -> Result<T> {
     Ok(response.json::<T>().await?)
 }
 
-#[tokio::main]
-pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
-    let url = get_default_url()?;
+fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
     let org = get_org(value.clone())?;
-    let path = get_env_path(value.clone())?;
-    let request_url = format!(
+    let url = get_default_url()?;
+
+    Ok(format!(
         "{}/orgs/{}/repos/{}?env={}",
         url, org, value.repository, value.env
-    );
+    ))
+}
+
+#[tokio::main]
+pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
+    let path = get_env_path(value.clone())?;
+    let request_url = get_request_url(value)?;
 
     let result =
         treat_api_err::<PullResponse>(Client::new().get(&request_url).send().await?).await?;
@@ -75,14 +80,9 @@ pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
 #[tokio::main]
 pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
     let path = get_env_path(value.clone())?;
-    let url = get_default_url()?;
-    let org = get_org(value.clone())?;
     let content = std::fs::read_to_string(path.clone())
-        .with_context(|| format!("could not read file `{}`", path))?;
-    let request_url = format!(
-        "{}/orgs/{}/repos/{}?env={}",
-        url, org, value.repository, value.env,
-    );
+        .with_context(|| format!("Could not read file `{}`", path))?;
+    let request_url = get_request_url(value)?;
     let request_body = json!({
         "b64String": BASE64_STANDARD.encode(content)
     });
