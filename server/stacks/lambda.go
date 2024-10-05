@@ -1,6 +1,8 @@
 package stacks
 
 import (
+	"errors"
+
 	"github.com/aws/aws-cdk-go/awscdk"
 	"github.com/aws/aws-cdk-go/awscdk/awslambdago"
 	"github.com/aws/aws-cdk-go/awscdk/awss3"
@@ -13,7 +15,7 @@ type CdkLambdaStackProps struct {
 	awss3.Bucket
 }
 
-func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaStackProps) {
+func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaStackProps) error {
 	var sprops awscdk.StackProps
 
 	if props != nil {
@@ -21,21 +23,27 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
+	if props.Bucket == nil {
+		return errors.New("BUCKET SHOULD BE DEFINED")
+	}
+
 	downloadFileFunc := awslambdago.NewGoFunction(stack, jsii.String("download-file-func"), &awslambdago.GoFunctionProps{
-		MemorySize: jsii.Number(128),
-		Entry:      jsii.String("./lambdas/download-file"),
+		MemorySize:  jsii.Number(128),
+		Entry:       jsii.String("./lambdas/download-file"),
+		Environment: &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
 	})
 
 	uploadFileFunc := awslambdago.NewGoFunction(stack, jsii.String("upload-file-func"), &awslambdago.GoFunctionProps{
-		MemorySize: jsii.Number(128),
-		Entry:      jsii.String("./lambdas/upload-file"),
+		MemorySize:  jsii.Number(128),
+		Entry:       jsii.String("./lambdas/upload-file"),
+		Environment: &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
 	})
 
-	if props.Bucket != nil {
-		// Grant read permissions to the download functioni
-		props.Bucket.GrantRead(downloadFileFunc.Role(), nil)
+	// Grant read permissions to the download functioni
+	props.Bucket.GrantRead(downloadFileFunc.Role(), nil)
 
-		// Grant write permissions to the upload function
-		props.Bucket.GrantWrite(uploadFileFunc.Role(), nil)
-	}
+	// Grant write permissions to the upload function
+	props.Bucket.GrantWrite(uploadFileFunc.Role(), nil)
+
+	return nil
 }
