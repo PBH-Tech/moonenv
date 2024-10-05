@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/PBH-Tech/moonenv/handle"
-	orchestratorService "github.com/PBH-Tech/moonenv/orchestrator-service"
+	"github.com/PBH-Tech/moonenv/lambdas/handle"
+	orchestratorService "github.com/PBH-Tech/moonenv/lambdas/orchestrator-service"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 

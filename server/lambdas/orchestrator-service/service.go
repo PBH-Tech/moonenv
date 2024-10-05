@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	bucketService "github.com/PBH-Tech/moonenv/bucket-service"
-	"github.com/PBH-Tech/moonenv/handle"
+	bucketService "github.com/PBH-Tech/moonenv/lambdas/bucket-service"
+	"github.com/PBH-Tech/moonenv/lambdas/handle"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	lambdaSdk "github.com/aws/aws-sdk-go/service/lambda"

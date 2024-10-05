@@ -1,9 +1,8 @@
 package main
 
 import (
-	"github.com/aws/aws-cdk-go/awscdk/v2"
-	// "github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
-	"github.com/aws/constructs-go/constructs/v10"
+	"github.com/PBH-Tech/moonenv/stacks"
+	"github.com/aws/aws-cdk-go/awscdk"
 	"github.com/aws/jsii-runtime-go"
 )
 
@@ -11,32 +10,20 @@ type ServerStackProps struct {
 	awscdk.StackProps
 }
 
-func NewServerStack(scope constructs.Construct, id string, props *ServerStackProps) awscdk.Stack {
-	var sprops awscdk.StackProps
-	if props != nil {
-		sprops = props.StackProps
-	}
-	stack := awscdk.NewStack(scope, &id, &sprops)
-
-	// The code that defines your stack goes here
-
-	// example resource
-	// queue := awssqs.NewQueue(stack, jsii.String("ServerQueue"), &awssqs.QueueProps{
-	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
-	// })
-
-	return stack
-}
-
 func main() {
 	defer jsii.Close()
 
 	app := awscdk.NewApp(nil)
 
-	NewServerStack(app, "ServerStack", &ServerStackProps{
-		awscdk.StackProps{
+	bucket := stacks.NewS3Bucket(app, "CdkS3Stack", &stacks.CdkS3StackProps{
+		StackProps: awscdk.StackProps{
+			Env: env(),
+		}})
+	stacks.NewCdkLambdaStack(app, "CdkLambdaStack", &stacks.CdkLambdaStackProps{
+		StackProps: awscdk.StackProps{
 			Env: env(),
 		},
+		Bucket: bucket,
 	})
 
 	app.Synth(nil)
