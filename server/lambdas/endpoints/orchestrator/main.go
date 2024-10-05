@@ -14,7 +14,7 @@ func main() {
 }
 
 func handler(ctx context.Context, req handle.Request) (handle.Response, error) {
-	switch req.HTTPMethod {
+	switch req.RequestContext.HTTP.Method {
 	case http.MethodGet:
 		return orchestratorService.PullCommand(req)
 	case http.MethodPost:

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"errors"
+	"os"
+
 	"github.com/PBH-Tech/moonenv/stacks"
 	"github.com/aws/aws-cdk-go/awscdk"
 	"github.com/aws/jsii-runtime-go"
@@ -19,14 +22,26 @@ func main() {
 		StackProps: awscdk.StackProps{
 			Env: env(),
 		}})
-	stacks.NewCdkLambdaStack(app, "CdkLambdaStack", &stacks.CdkLambdaStackProps{
+	lambdas, err := stacks.NewCdkLambdaStack(app, "CdkLambdaStack", &stacks.CdkLambdaStackProps{
 		StackProps: awscdk.StackProps{
 			Env: env(),
 		},
 		Bucket: bucket,
 	})
 
+	if err != nil {
+		errors.New(err.Error())
+	}
+
+	stacks.NewApiGatewayStack(app, "CdkApiGatewayStack", &stacks.CdkApiGatewayProps{
+		StackProps: awscdk.StackProps{
+			Env: env(),
+		},
+		CdkLambdaStackFunctions: *lambdas,
+	})
+
 	app.Synth(nil)
+
 }
 
 // env determines the AWS environment (account+region) in which our stack is to
@@ -36,7 +51,7 @@ func env() *awscdk.Environment {
 	// Account/Region-dependent features and context lookups will not work, but a
 	// single synthesized template can be deployed anywhere.
 	//---------------------------------------------------------------------------
-	return nil
+	// return nil
 
 	// Uncomment if you know exactly what account and region you want to deploy
 	// the stack to. This is the recommendation for production stacks.
@@ -50,8 +65,8 @@ func env() *awscdk.Environment {
 	// implied by the current CLI configuration. This is recommended for dev
 	// stacks.
 	//---------------------------------------------------------------------------
-	// return &awscdk.Environment{
-	//  Account: jsii.String(os.Getenv("CDK_DEFAULT_ACCOUNT")),
-	//  Region:  jsii.String(os.Getenv("CDK_DEFAULT_REGION")),
-	// }
+	return &awscdk.Environment{
+		Account: jsii.String(os.Getenv("CDK_DEFAULT_ACCOUNT")),
+		Region:  jsii.String(os.Getenv("CDK_DEFAULT_REGION")),
+	}
 }

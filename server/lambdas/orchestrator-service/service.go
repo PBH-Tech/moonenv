@@ -15,18 +15,15 @@ import (
 )
 
 type PushCommandRequest struct {
-	Org    string `json:"org"`
-	Repo   string `json:"repo"`
-	Env    string `json:"env"`
 	B64Str string `json:"b64String"`
 }
 
 func PullCommand(req handle.Request) (handle.Response, error) {
-
-	commandData := req.QueryStringParameters
-	request := bucketService.DownloadFileData{Key: fmt.Sprintf("%s/%s/%s", commandData["org"], commandData["repo"], commandData["env"])}
+	pathData := req.PathParameters
+	queryDate := req.QueryStringParameters
+	pathRequest := bucketService.DownloadFileData{Key: fmt.Sprintf("%s/%s/%s", pathData["org"], pathData["repo"], queryDate["env"])}
 	client := getLambdaClient()
-	payload, err := json.Marshal(request)
+	payload, err := json.Marshal(pathRequest)
 
 	if err != nil {
 		return handle.ApiResponse(http.StatusInternalServerError, "Failed while preparing the payload")
@@ -57,6 +54,8 @@ func getHeader(headers map[string]string, key string) string {
 }
 
 func PushCommand(req handle.Request) (handle.Response, error) {
+	pathData := req.PathParameters
+	queryDate := req.QueryStringParameters
 	if getHeader(req.Headers, "content-type") != "application/json" {
 		return handle.ApiResponse(http.StatusBadRequest, "Invalid request type")
 	}
@@ -69,7 +68,7 @@ func PushCommand(req handle.Request) (handle.Response, error) {
 		return handle.ApiResponse(http.StatusBadRequest, "Invalid body request")
 	}
 
-	request := bucketService.UploadFileData{B64Str: commandData.B64Str, ObjName: fmt.Sprintf("%s/%s/%s", commandData.Org, commandData.Repo, commandData.Env)}
+	request := bucketService.UploadFileData{B64Str: commandData.B64Str, ObjName: fmt.Sprintf("%s/%s/%s", pathData["org"], pathData["repo"], queryDate["env"])}
 	client := getLambdaClient()
 	payload, err := json.Marshal(request)
 

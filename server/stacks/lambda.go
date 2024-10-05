@@ -15,7 +15,12 @@ type CdkLambdaStackProps struct {
 	awss3.Bucket
 }
 
-func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaStackProps) error {
+type CdkLambdaStackFunctions struct {
+	uploadFileFunc   awslambdago.GoFunction
+	downloadFileFunc awslambdago.GoFunction
+}
+
+func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaStackProps) (*CdkLambdaStackFunctions, error) {
 	var sprops awscdk.StackProps
 
 	if props != nil {
@@ -24,7 +29,7 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	if props.Bucket == nil {
-		return errors.New("BUCKET SHOULD BE DEFINED")
+		return nil, errors.New("BUCKET SHOULD BE DEFINED")
 	}
 
 	downloadFileFunc := awslambdago.NewGoFunction(stack, jsii.String("download-file-func"), &awslambdago.GoFunctionProps{
@@ -45,5 +50,5 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 	// Grant write permissions to the upload function
 	props.Bucket.GrantWrite(uploadFileFunc.Role(), nil)
 
-	return nil
+	return &CdkLambdaStackFunctions{uploadFileFunc: uploadFileFunc, downloadFileFunc: downloadFileFunc}, nil
 }
