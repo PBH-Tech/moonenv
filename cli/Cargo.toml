@@ -1,6 +1,6 @@
 [package]
 name = "moonenv"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["João Vitor Teixeira <joaovitorteixeira.dev@gmail.com>", "Mateus José Barbosa <dev.mateusbarbosa@gmail.com>"]
 description = "A tool to manage environment variables"
