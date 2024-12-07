@@ -11,7 +11,7 @@ type CdkS3StackProps struct {
 	awscdk.StackProps
 }
 
-func NewS3Bucket(scope constructs.Construct, id string, props *CdkS3StackProps) awss3.Bucket {
+func NewS3BucketStack(scope constructs.Construct, id string, props *CdkS3StackProps) awss3.Bucket {
 	var sProps awscdk.StackProps
 
 	if props != nil {

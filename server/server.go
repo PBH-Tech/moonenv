@@ -18,12 +18,12 @@ func main() {
 
 	app := awscdk.NewApp(nil)
 
-	bucket := stacks.NewS3Bucket(app, "CdkS3Stack", &stacks.CdkS3StackProps{
+	bucket := stacks.NewS3BucketStack(app, "MoonenvS3Stack", &stacks.CdkS3StackProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
 			StackName: jsii.String("moonenv-s3"),
 		}})
-	lambdas, err := stacks.NewCdkLambdaStack(app, "CdkLambdaStack", &stacks.CdkLambdaStackProps{
+	lambdas, err := stacks.NewCdkLambdaStack(app, "MoonenvLambdaStack", &stacks.CdkLambdaStackProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
 			StackName: jsii.String("moonenv-lambda"),
@@ -35,12 +35,19 @@ func main() {
 		errors.New(err.Error())
 	}
 
-	stacks.NewApiGatewayStack(app, "CdkApiGatewayStack", &stacks.CdkApiGatewayProps{
+	stacks.NewApiGatewayStack(app, "MoonenvApiGatewayStack", &stacks.CdkApiGatewayProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
 			StackName: jsii.String("moonenv-api-gateway"),
 		},
 		CdkLambdaStackFunctions: *lambdas,
+	})
+
+	stacks.NewCognitoStack(app, "MoonenvCognitoStack", &stacks.CdkCognitoStackProps{
+		StackProps: awscdk.StackProps{
+			Env:       env(),
+			StackName: jsii.String("moonenv-cognito"),
+		},
 	})
 
 	app.Synth(nil)

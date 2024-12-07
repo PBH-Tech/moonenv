@@ -1,10 +1,10 @@
 module github.com/PBH-Tech/moonenv
 
-go 1.21
+go 1.22.0
 
 toolchain go1.22.2
 
-require github.com/aws/jsii-runtime-go v1.94.0
+require github.com/aws/jsii-runtime-go v1.104.0
 
 require (
 	github.com/aws/aws-lambda-go v1.47.0
@@ -32,17 +32,18 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.0 // indirect
 	github.com/aws/smithy-go v1.22.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.2.1 // indirect
+	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/aws/aws-cdk-go/awscdk v1.204.0-devpreview
-	github.com/fatih/color v1.16.0 // indirect
+	github.com/fatih/color v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
-	golang.org/x/tools v0.16.1 // indirect
+	golang.org/x/mod v0.21.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/tools v0.26.0 // indirect
 )
