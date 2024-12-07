@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	bucketService "github.com/PBH-Tech/moonenv/lambdas/bucket-service"
+	bucketService "github.com/PBH-Tech/moonenv/lambdas/util/bucket"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"

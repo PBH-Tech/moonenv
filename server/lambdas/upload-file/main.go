@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	bucketService "github.com/PBH-Tech/moonenv/lambdas/bucket-service"
-	"github.com/PBH-Tech/moonenv/lambdas/handle"
+	bucketService "github.com/PBH-Tech/moonenv/lambdas/util/bucket"
+	restApi "github.com/PBH-Tech/moonenv/lambdas/util/rest-api"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -19,11 +19,11 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, event *bucketService.UploadFileData) (handle.Response, error) {
+func handler(ctx context.Context, event *bucketService.UploadFileData) (restApi.Response, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 
 	if err != nil {
-		return handle.ApiResponse(http.StatusInternalServerError, "Failed to load SDK Configuration")
+		return restApi.ApiResponse(http.StatusInternalServerError, "Failed to load SDK Configuration")
 	}
 
 	s3Client = s3.NewFromConfig(cfg)
