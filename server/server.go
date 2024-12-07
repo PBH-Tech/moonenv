@@ -20,11 +20,13 @@ func main() {
 
 	bucket := stacks.NewS3Bucket(app, "CdkS3Stack", &stacks.CdkS3StackProps{
 		StackProps: awscdk.StackProps{
-			Env: env(),
+			Env:       env(),
+			StackName: jsii.String("moonenv-s3"),
 		}})
 	lambdas, err := stacks.NewCdkLambdaStack(app, "CdkLambdaStack", &stacks.CdkLambdaStackProps{
 		StackProps: awscdk.StackProps{
-			Env: env(),
+			Env:       env(),
+			StackName: jsii.String("moonenv-lambda"),
 		},
 		Bucket: bucket,
 	})
@@ -35,7 +37,8 @@ func main() {
 
 	stacks.NewApiGatewayStack(app, "CdkApiGatewayStack", &stacks.CdkApiGatewayProps{
 		StackProps: awscdk.StackProps{
-			Env: env(),
+			Env:       env(),
+			StackName: jsii.String("moonenv-api-gateway"),
 		},
 		CdkLambdaStackFunctions: *lambdas,
 	})

@@ -1,5 +1,13 @@
 {
-  "cSpell.words": ["confy", "moonenv", "Runtimes"],
+  "cSpell.words": [
+    "awsapigatewayv",
+    "awscdk",
+    "awslambdago",
+    "confy",
+    "jsii",
+    "moonenv",
+    "Runtimes"
+  ],
   // format all files on save if a formatter is available
   "editor.formatOnSave": true,
   // I use "goimports" instead of "gofmt"

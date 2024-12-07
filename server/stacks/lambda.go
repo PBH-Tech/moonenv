@@ -21,12 +21,12 @@ type CdkLambdaStackFunctions struct {
 }
 
 func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaStackProps) (*CdkLambdaStackFunctions, error) {
-	var sprops awscdk.StackProps
+	var sProps awscdk.StackProps
 
 	if props != nil {
-		sprops = props.StackProps
+		sProps = props.StackProps
 	}
-	stack := awscdk.NewStack(scope, &id, &sprops)
+	stack := awscdk.NewStack(scope, &id, &sProps)
 
 	if props.Bucket == nil {
 		return nil, errors.New("BUCKET SHOULD BE DEFINED")
