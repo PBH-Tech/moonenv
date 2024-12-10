@@ -6,6 +6,7 @@ import (
 
 	"github.com/PBH-Tech/moonenv/stacks"
 	"github.com/aws/aws-cdk-go/awscdk"
+	"github.com/aws/aws-cdk-go/awscdk/awsdynamodb"
 	"github.com/aws/jsii-runtime-go"
 )
 
@@ -35,19 +36,30 @@ func main() {
 		errors.New(err.Error())
 	}
 
+	tokenCodeTable := stacks.NewTableStack(app, "MoonenvTokenCodeTable", &stacks.CdkTableStackProps{
+		StackProps: awscdk.StackProps{
+			Env:       env(),
+			StackName: jsii.String("moonenv-token-code-table"),
+		},
+		TableName:    *jsii.String("moonenv-token-code"),
+		PartitionKey: awsdynamodb.Attribute{Name: jsii.String("deviceCode"), Type: awsdynamodb.AttributeType_STRING},
+	})
+
+	cognitoStack := stacks.NewCognitoStack(app, "MoonenvCognitoStack", &stacks.CdkCognitoStackProps{
+		StackProps: awscdk.StackProps{
+			Env:       env(),
+			StackName: jsii.String("moonenv-cognito"),
+		},
+	})
+
 	stacks.NewApiGatewayStack(app, "MoonenvApiGatewayStack", &stacks.CdkApiGatewayProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
 			StackName: jsii.String("moonenv-api-gateway"),
 		},
 		CdkLambdaStackFunctions: *lambdas,
-	})
-
-	stacks.NewCognitoStack(app, "MoonenvCognitoStack", &stacks.CdkCognitoStackProps{
-		StackProps: awscdk.StackProps{
-			Env:       env(),
-			StackName: jsii.String("moonenv-cognito"),
-		},
+		TokenCodeTable:          tokenCodeTable,
+		CognitoStack:            *cognitoStack,
 	})
 
 	app.Synth(nil)

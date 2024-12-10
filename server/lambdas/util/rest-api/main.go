@@ -26,5 +26,9 @@ func UnhandledMethod() (Response, error) {
 	return ApiResponse(http.StatusMethodNotAllowed, "Method not allowed")
 }
 
+func BuildErrorResponse(statusCode int, message string) (Response, error) {
+	return ApiResponse(statusCode, map[string]string{"message": message})
+}
+
 type Request events.APIGatewayV2HTTPRequest
 type Response events.APIGatewayV2HTTPResponse
