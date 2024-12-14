@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/aws/aws-cdk-go/awscdk"
@@ -47,18 +48,23 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 			"DownloadFuncName": props.CdkLambdaStackFunctions.downloadFileFunc.FunctionArn(),
 		},
 	})
+
+	callbackUri := fmt.Sprintf("%scallback", *api.Url())
 	tokenAuth := awslambdago.NewGoFunction(stack, jsii.String("MoonenvAuth"), &awslambdago.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
 		Entry:        jsii.String("./lambdas/endpoints/auth/token"),
 		FunctionName: jsii.String("moonenv-auth-token"),
 		Environment: &map[string]*string{
 			"TokenCodeTableName":       props.TokenCodeTable.TableName(),
-			"CodeVerificationUri":      api.Url(),
+			"CallbackUri":              jsii.String(callbackUri),
 			"PollingIntervalInSeconds": jsii.String(strconv.FormatInt(int64(3), 10)),
-			"CognitoUrl":               jsii.String(CognitoFullUrl),
+			//TODO: improve this
+			// Tried to get this value from cognito using SSM, but it makes cycle dependency
+			"CognitoUrl": jsii.String("https://moonenv.auth.ap-southeast-2.amazoncognito.com"),
 		},
 	})
 
+	// props.SsmStack.cognitoUserPoolDomainParameter.GrantRead(tokenAuth)
 	props.TokenCodeTable.GrantReadWriteData(tokenAuth)
 
 	api.AddRoutes(&awsapigatewayv2.AddRoutesOptions{
@@ -78,6 +84,8 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 
 	props.CdkLambdaStackFunctions.downloadFileFunc.GrantInvoke(orchestrator.Role())
 	props.CdkLambdaStackFunctions.uploadFileFunc.GrantInvoke(orchestrator.Role())
+
+	props.CognitoStack.SetCallbackUrLs(jsii.Strings(callbackUri))
 
 	awscdk.NewCfnOutput(stack, jsii.String("MoonenvApiGatewayUrl"), &awscdk.CfnOutputProps{Value: api.Url()})
 }

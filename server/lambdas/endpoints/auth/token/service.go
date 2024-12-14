@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -12,6 +14,11 @@ import (
 )
 
 var characterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789!@#$%^&*")
+
+type CodeChallenge struct {
+	CodeChallenge string
+	CodeVerifier  string
+}
 
 func randStringRunes(n int) string {
 	b := make([]rune, n)
@@ -31,13 +38,17 @@ func RequestSetOfToken(clientId string) (restApi.Response, error) {
 		deviceCode       = randStringRunes(deviceCodeLength)
 		expiresIn        = 900 // 15 minutes
 	)
+	codeChallenge := generateCodeVerifierAndChallenge()
 
 	token, err := tokenCode.InsertToken(tokenCode.TokenCode{
-		DeviceCode:              deviceCode,
-		UserCode:                userCode,
-		VerificationUri:         fmt.Sprintf("%sdevice", CodeVerificationUri),
-		VerificationUriComplete: fmt.Sprintf("%sdevice?code=%s&authorize=true", CodeVerificationUri, userCode),
+		DeviceCode: deviceCode,
+		UserCode:   userCode,
+		AuthorizationUri: fmt.Sprintf(
+			"%s/oauth2/authorize?response_type=code&client_id=%s&redirect_uri=%s&code_challenge=%s&code_challenge_method=S256&scope=openid profile",
+			CognitoUrl, clientId, CallbackUri, codeChallenge.CodeChallenge),
+		VerificationUriComplete: fmt.Sprintf("%s/device?code=%s&authorize=true", CallbackUri, userCode),
 		ClientId:                clientId,
+		CodeChallenge:           codeChallenge.CodeChallenge,
 		Status:                  "authorization_pending",
 		ExpireAt:                strconv.FormatInt(time.Now().Add(time.Duration(expiresIn)*time.Second).Unix(), 10),
 		LastCheckedAt:           strconv.FormatInt(time.Now().Unix(), 10),
@@ -73,9 +84,23 @@ func RequestJWTs(deviceCode string, clientId string) (restApi.Response, error) {
 	if token.Status == "authorization_pending" || token.Status == "denied" {
 		return restApi.ApiResponse(http.StatusBadRequest, token)
 	} else {
-		uri := fmt.Sprintf("%s/oauth2/authorize?response_type=code&client_id=%s&redirect_uri=%s&&scope=openid profile", CognitoUrl, clientId, "http://localhost:3000")
+		return restApi.ApiResponse(http.StatusOK, map[string]string{"message": "Authorized"})
+	}
+}
 
-		return restApi.ApiResponse(http.StatusOK, uri)
+func generateCodeVerifierAndChallenge() CodeChallenge {
+	var (
+		codeVerifierLength = 32
+		codeVerifier       = randStringRunes(codeVerifierLength)
+	)
+	hasher := sha256.New()
+
+	hasher.Write([]byte(codeVerifier))
+	challenge := hasher.Sum(nil)
+
+	return CodeChallenge{
+		CodeChallenge: base64.URLEncoding.EncodeToString(challenge),
+		CodeVerifier:  codeVerifier,
 	}
 }
 

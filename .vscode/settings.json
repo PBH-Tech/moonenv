@@ -6,6 +6,7 @@
     "awsdynamodb",
     "awslambdago",
     "awss",
+    "awsssm",
     "confy",
     "dynamodbattribute",
     "jsii",

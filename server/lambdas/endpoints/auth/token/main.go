@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	CodeVerificationUri      = os.Getenv("CodeVerificationUri")
+	CallbackUri              = os.Getenv("CallbackUri")
 	CognitoUrl               = os.Getenv("CognitoUrl")
 	PollingIntervalInSeconds int64
 )
