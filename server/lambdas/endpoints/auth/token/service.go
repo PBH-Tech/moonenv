@@ -50,7 +50,9 @@ func RequestSetOfToken(clientId string) (restApi.Response, error) {
 		VerificationUriComplete: fmt.Sprintf("%s/device?code=%s&authorize=true", CallbackUri, stateCode),
 		ClientId:                clientId,
 		CodeChallenge:           codeChallenge.CodeChallenge,
+		CodeVerifier:            codeChallenge.CodeVerifier,
 		Status:                  "authorization_pending",
+		State:                   stateCode,
 		ExpireAt:                strconv.FormatInt(time.Now().Add(time.Duration(expiresIn)*time.Second).Unix(), 10),
 		LastCheckedAt:           strconv.FormatInt(time.Now().Unix(), 10),
 	})

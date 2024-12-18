@@ -12,14 +12,15 @@ import (
 
 type TokenCode struct {
 	DeviceCode              string `json:"deviceCode"`
-	State                   string `json:"-"`
+	State                   string `json:"state"`
 	AuthorizationUri        string `json:"authorizationUri"`
 	VerificationUriComplete string `json:"verificationUriComplete"`
 	ClientId                string `json:"clientId"`
 	ExpireAt                string `json:"expireAt"`
 	LastCheckedAt           string `json:"lastCheckedAt"`
-	CodeChallenge           string `json:"-"`
-	CodeVerifier            string `json:"-"` // Omitting it
+	LoginCode               string `json:"loginCode"`
+	CodeChallenge           string `json:"codeChallenge"`
+	CodeVerifier            string `json:"codeVerifier"` // Omitting it
 	// TODO: find a way to turn it into something like an enum
 	Status string `json:"status"`
 }
@@ -84,6 +85,33 @@ func GetToken(deviceCode string) (*TokenCode, error) {
 	return tokenCode, nil
 }
 
+func QueryToken(indexName string, keyConditions map[string]*dynamodbService.Condition) ([]*TokenCode, error) {
+	client, err := dynamodb.NewDynamodb()
+
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := client.Query(&dynamodbService.QueryInput{
+		TableName:     tokenCodeTableName,
+		IndexName:     &indexName,
+		KeyConditions: keyConditions,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var tokens []*TokenCode
+
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &tokens)
+	if err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
+}
+
 func UpdateToken(deviceCode string, tokenCodeToUpdate TokenCode) error {
 	client, err := dynamodb.NewDynamodb()
 
@@ -128,8 +156,6 @@ func UpdateToken(deviceCode string, tokenCodeToUpdate TokenCode) error {
 			expressionAttributeValues[valuePlaceholder] = item[tag]
 		}
 	}
-
-	println("updateExpression: %+v", updateExpression)
 
 	input := dynamodbService.UpdateItemInput{
 		Key: map[string]*dynamodbService.AttributeValue{

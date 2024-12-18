@@ -9,15 +9,19 @@ import (
 )
 
 func ApiResponse(statusCode int, body interface{}) (Response, error) {
-	var buf bytes.Buffer
+	var (
+		buf      bytes.Buffer
+		respBody []byte
+	)
 
 	resp := Response{Headers: map[string]string{"Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST"}}
 	resp.StatusCode = statusCode
 
-	respBody, _ := json.Marshal(body)
-
-	json.HTMLEscape(&buf, respBody)
-	resp.Body = string(respBody)
+	if body != nil {
+		respBody, _ = json.Marshal(body)
+		json.HTMLEscape(&buf, respBody)
+		resp.Body = string(respBody)
+	}
 
 	return resp, nil
 }

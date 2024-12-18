@@ -45,6 +45,15 @@ func main() {
 		PartitionKey: awsdynamodb.Attribute{Name: jsii.String("deviceCode"), Type: awsdynamodb.AttributeType_STRING},
 	})
 
+	tokenCodeStateIndexName := jsii.Sprintf("state-index")
+	tokenCodeTable.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
+		IndexName: tokenCodeStateIndexName,
+		PartitionKey: &awsdynamodb.Attribute{
+			Name: jsii.String("state"),
+			Type: awsdynamodb.AttributeType_STRING,
+		},
+	})
+
 	cognitoStack := stacks.NewCognitoStack(app, "MoonenvCognitoStack", &stacks.CdkCognitoStackProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
@@ -60,6 +69,7 @@ func main() {
 		CdkLambdaStackFunctions: *lambdas,
 		TokenCodeTable:          tokenCodeTable,
 		CognitoStack:            *cognitoStack,
+		TokenCodeStateIndexName: tokenCodeStateIndexName,
 	})
 
 	app.Synth(nil)
