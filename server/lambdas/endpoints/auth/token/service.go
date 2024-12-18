@@ -4,39 +4,26 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	tokenCode "github.com/PBH-Tech/moonenv/lambdas/endpoints/auth"
 	restApi "github.com/PBH-Tech/moonenv/lambdas/util/rest-api"
+	"github.com/google/uuid"
 )
-
-var characterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")
 
 type CodeChallenge struct {
 	CodeChallenge string
 	CodeVerifier  string
 }
 
-func randStringRunes(n int) string {
-	b := make([]rune, n)
-
-	for i := range b {
-		b[i] = characterRunes[rand.Intn(len(characterRunes))]
-	}
-
-	return string(b)
-}
-
 func RequestSetOfToken(clientId string) (restApi.Response, error) {
 	var (
-		stateCodeLength  = 32
-		deviceCodeLength = 16
-		stateCode        = randStringRunes(stateCodeLength)
-		deviceCode       = randStringRunes(deviceCodeLength)
-		expiresIn        = 900 // 15 minutes
+		stateCode  = uuid.New().String()
+		deviceCode = uuid.New().String()
+		expiresIn  = 900 // 15 minutes
 	)
 
 	codeChallenge := generateCodeVerifierAndChallenge()
@@ -84,25 +71,30 @@ func RequestJWTs(deviceCode string, clientId string) (restApi.Response, error) {
 
 	}
 
-	if token.Status == "authorization_pending" || token.Status == "denied" {
-		return restApi.ApiResponse(http.StatusBadRequest, token)
+	if token.Status == "authorization_pending" {
+		return restApi.BuildErrorResponse(http.StatusBadRequest, "Authorization is still pending")
+	} else if token.LoginCode == "" {
+		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Something went wrong while setting the login code")
 	} else {
-		return restApi.ApiResponse(http.StatusOK, map[string]string{"message": "Authorized"})
+
+		return restApi.ApiResponse(http.StatusCreated, map[string]string{})
 	}
 }
 
 func generateCodeVerifierAndChallenge() CodeChallenge {
 	var (
-		codeVerifierLength = 32
-		codeVerifier       = randStringRunes(codeVerifierLength)
+		codeVerifier = uuid.New().String()
 	)
 	hasher := sha256.New()
 
 	hasher.Write([]byte(codeVerifier))
-	challenge := hasher.Sum(nil)
+	codeVerifierHash := hasher.Sum(nil)
+
+	codeChallenge := base64.URLEncoding.EncodeToString(codeVerifierHash)
+	codeChallenge = strings.TrimRight(codeChallenge, "=")
 
 	return CodeChallenge{
-		CodeChallenge: base64.URLEncoding.EncodeToString(challenge),
+		CodeChallenge: codeChallenge,
 		CodeVerifier:  codeVerifier,
 	}
 }

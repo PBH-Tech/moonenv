@@ -13,6 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.41
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.65.0
 	github.com/aws/constructs-go/constructs/v3 v3.4.232
+	github.com/google/uuid v1.6.0
 )
 
 require (

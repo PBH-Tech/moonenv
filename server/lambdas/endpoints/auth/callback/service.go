@@ -25,7 +25,7 @@ func SaveCode(state string, code string) (restApi.Response, error) {
 		return restApi.ApiResponse(http.StatusNotFound, "State was not found")
 	}
 
-	err = tokenCode.UpdateToken(tokens[0].DeviceCode, tokenCode.TokenCode{LoginCode: code})
+	err = tokenCode.UpdateToken(tokens[0].DeviceCode, tokenCode.TokenCode{LoginCode: code, Status: "authorized"})
 
 	if err != nil {
 		return restApi.ApiResponse(http.StatusInternalServerError, "Problem while saving the login code")
