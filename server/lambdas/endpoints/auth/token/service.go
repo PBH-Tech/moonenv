@@ -3,8 +3,10 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +19,22 @@ import (
 type CodeChallenge struct {
 	CodeChallenge string
 	CodeVerifier  string
+}
+
+type CognitoTokenResponse struct {
+	IdToken      string `json:"id_token"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+}
+
+type APIResponse struct {
+	IdToken      string `json:"idToken"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    int    `json:"expiresIn"`
+	TokenType    string `json:"tokenType"`
 }
 
 func RequestSetOfToken(clientId string) (restApi.Response, error) {
@@ -48,6 +66,7 @@ func RequestSetOfToken(clientId string) (restApi.Response, error) {
 		return restApi.ApiResponse(http.StatusBadRequest, err.Error())
 	}
 
+	//TODO: don't return the whole token object
 	return restApi.ApiResponse(http.StatusCreated, token)
 }
 
@@ -73,12 +92,58 @@ func RequestJWTs(deviceCode string, clientId string) (restApi.Response, error) {
 
 	if token.Status == "authorization_pending" {
 		return restApi.BuildErrorResponse(http.StatusBadRequest, "Authorization is still pending")
+	} else if token.Status == "completed" {
+		return restApi.BuildErrorResponse(http.StatusBadRequest, "This authorization flow is already completed")
 	} else if token.LoginCode == "" {
 		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Something went wrong while setting the login code")
 	} else {
 
-		return restApi.ApiResponse(http.StatusCreated, map[string]string{})
+		err = tokenCode.UpdateToken(token.DeviceCode, tokenCode.TokenCode{Status: "completed"})
+
+		if err != nil {
+			return restApi.BuildErrorResponse(http.StatusInternalServerError, "Failed to update token to complete state")
+
+		}
+
+		return getToken(*token)
 	}
+}
+
+func getToken(token tokenCode.TokenCode) (restApi.Response, error) {
+	data := url.Values{}
+	oauthUrl, err := url.ParseRequestURI(CognitoUrl)
+
+	if err != nil {
+		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Error while parsing cognito url")
+	}
+
+	data.Set("redirect_uri", CallbackUri)
+	data.Set("client_id", token.ClientId)
+	data.Set("code", token.LoginCode)
+	data.Set("grant_type", "authorization_code")
+	data.Set("code_verifier", token.CodeVerifier)
+	oauthUrl.Path = "/oauth2/token"
+
+	oauthUrlStr := oauthUrl.String()
+	client := &http.Client{}
+
+	resp, err := client.PostForm(oauthUrlStr, data)
+	if err != nil {
+		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Error while sending HTTP request")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return restApi.BuildErrorResponse(http.StatusInternalServerError, "HTTP request did not return OK")
+	}
+
+	var tokenResponse CognitoTokenResponse
+	err = json.NewDecoder(resp.Body).Decode(&tokenResponse)
+	if err != nil {
+		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Error decoding JSON response")
+	}
+
+	return restApi.ApiResponse(http.StatusCreated, APIResponse(tokenResponse))
 }
 
 func generateCodeVerifierAndChallenge() CodeChallenge {
@@ -104,7 +169,6 @@ func validateTokenCode(token tokenCode.TokenCode, clientId string) (*restApi.Res
 	expiresAt, err := strconv.ParseInt(token.ExpireAt, 10, 64)
 
 	if err != nil {
-		println("%s", err.Error())
 		response, err := restApi.BuildErrorResponse(http.StatusInternalServerError, "Impossible to convert expires at")
 
 		return &response, err
