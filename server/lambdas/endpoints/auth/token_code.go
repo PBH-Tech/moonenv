@@ -11,16 +11,15 @@ import (
 )
 
 type TokenCode struct {
-	DeviceCode              string `json:"deviceCode"`
-	State                   string `json:"state"`
-	AuthorizationUri        string `json:"authorizationUri"`
-	VerificationUriComplete string `json:"verificationUriComplete"`
-	ClientId                string `json:"clientId"`
-	ExpireAt                string `json:"expireAt"`
-	LastCheckedAt           string `json:"lastCheckedAt"`
-	LoginCode               string `json:"loginCode"`
-	CodeChallenge           string `json:"codeChallenge"`
-	CodeVerifier            string `json:"codeVerifier"` // Omitting it
+	DeviceCode       string `json:"deviceCode"`
+	State            string `json:"state"`
+	AuthorizationUri string `json:"authorizationUri"`
+	ClientId         string `json:"clientId"`
+	ExpireAt         string `json:"expireAt"`
+	LastCheckedAt    string `json:"lastCheckedAt"`
+	LoginCode        string `json:"loginCode"`
+	CodeChallenge    string `json:"codeChallenge"`
+	CodeVerifier     string `json:"codeVerifier"` // Omitting it
 	// TODO: find a way to turn it into something like an enum
 	Status string `json:"status"`
 }

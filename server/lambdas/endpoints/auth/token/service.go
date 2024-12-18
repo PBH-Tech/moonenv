@@ -50,16 +50,15 @@ func RequestSetOfToken(clientId string) (restApi.Response, error) {
 		CognitoUrl, clientId, CallbackUri, codeChallenge.CodeChallenge, stateCode)
 
 	token, err := tokenCode.InsertToken(tokenCode.TokenCode{
-		DeviceCode:              deviceCode,
-		AuthorizationUri:        authorizationUri,
-		VerificationUriComplete: fmt.Sprintf("%s/device?code=%s&authorize=true", CallbackUri, stateCode),
-		ClientId:                clientId,
-		CodeChallenge:           codeChallenge.CodeChallenge,
-		CodeVerifier:            codeChallenge.CodeVerifier,
-		Status:                  "authorization_pending",
-		State:                   stateCode,
-		ExpireAt:                strconv.FormatInt(time.Now().Add(time.Duration(expiresIn)*time.Second).Unix(), 10),
-		LastCheckedAt:           strconv.FormatInt(time.Now().Unix(), 10),
+		DeviceCode:       deviceCode,
+		AuthorizationUri: authorizationUri,
+		ClientId:         clientId,
+		CodeChallenge:    codeChallenge.CodeChallenge,
+		CodeVerifier:     codeChallenge.CodeVerifier,
+		Status:           "authorization_pending",
+		State:            stateCode,
+		ExpireAt:         strconv.FormatInt(time.Now().Add(time.Duration(expiresIn)*time.Second).Unix(), 10),
+		LastCheckedAt:    strconv.FormatInt(time.Now().Unix(), 10),
 	})
 
 	if err != nil {
