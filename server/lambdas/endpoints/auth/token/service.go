@@ -32,7 +32,7 @@ func randStringRunes(n int) string {
 
 func RequestSetOfToken(clientId string) (restApi.Response, error) {
 	var (
-		stateCodeLength  = 16
+		stateCodeLength  = 32
 		deviceCodeLength = 16
 		stateCode        = randStringRunes(stateCodeLength)
 		deviceCode       = randStringRunes(deviceCodeLength)
