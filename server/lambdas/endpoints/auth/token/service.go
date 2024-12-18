@@ -13,7 +13,7 @@ import (
 	restApi "github.com/PBH-Tech/moonenv/lambdas/util/rest-api"
 )
 
-var characterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789!@#$%^&*")
+var characterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")
 
 type CodeChallenge struct {
 	CodeChallenge string
@@ -32,21 +32,22 @@ func randStringRunes(n int) string {
 
 func RequestSetOfToken(clientId string) (restApi.Response, error) {
 	var (
-		userCodeLength   = 16
+		stateCodeLength  = 16
 		deviceCodeLength = 16
-		userCode         = randStringRunes(userCodeLength)
+		stateCode        = randStringRunes(stateCodeLength)
 		deviceCode       = randStringRunes(deviceCodeLength)
 		expiresIn        = 900 // 15 minutes
 	)
+
 	codeChallenge := generateCodeVerifierAndChallenge()
+	authorizationUri := fmt.Sprintf(
+		"%s/oauth2/authorize?response_type=code&client_id=%s&redirect_uri=%s&code_challenge=%s&code_challenge_method=S256&state=%s&scope=openid profile",
+		CognitoUrl, clientId, CallbackUri, codeChallenge.CodeChallenge, stateCode)
 
 	token, err := tokenCode.InsertToken(tokenCode.TokenCode{
-		DeviceCode: deviceCode,
-		UserCode:   userCode,
-		AuthorizationUri: fmt.Sprintf(
-			"%s/oauth2/authorize?response_type=code&client_id=%s&redirect_uri=%s&code_challenge=%s&code_challenge_method=S256&scope=openid profile",
-			CognitoUrl, clientId, CallbackUri, codeChallenge.CodeChallenge),
-		VerificationUriComplete: fmt.Sprintf("%s/device?code=%s&authorize=true", CallbackUri, userCode),
+		DeviceCode:              deviceCode,
+		AuthorizationUri:        authorizationUri,
+		VerificationUriComplete: fmt.Sprintf("%s/device?code=%s&authorize=true", CallbackUri, stateCode),
 		ClientId:                clientId,
 		CodeChallenge:           codeChallenge.CodeChallenge,
 		Status:                  "authorization_pending",

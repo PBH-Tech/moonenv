@@ -64,9 +64,6 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 		},
 	})
 
-	// props.SsmStack.cognitoUserPoolDomainParameter.GrantRead(tokenAuth)
-	props.TokenCodeTable.GrantReadWriteData(tokenAuth)
-
 	api.AddRoutes(&awsapigatewayv2.AddRoutesOptions{
 		Path: jsii.String("/orgs/{org}/repos/{repo}"),
 		Methods: &[]awsapigatewayv2.HttpMethod{
@@ -75,7 +72,6 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 		},
 		Integration: awsapigatewayv2integrations.NewHttpLambdaIntegration(jsii.String("orchestrator"), orchestrator, &awsapigatewayv2integrations.HttpLambdaIntegrationProps{}),
 	})
-
 	api.AddRoutes(&awsapigatewayv2.AddRoutesOptions{
 		Path:        jsii.Sprintf("/auth/token"),
 		Methods:     &[]awsapigatewayv2.HttpMethod{awsapigatewayv2.HttpMethod_GET},
@@ -84,8 +80,8 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 
 	props.CdkLambdaStackFunctions.downloadFileFunc.GrantInvoke(orchestrator.Role())
 	props.CdkLambdaStackFunctions.uploadFileFunc.GrantInvoke(orchestrator.Role())
-
 	props.CognitoStack.SetCallbackUrLs(jsii.Strings(callbackUri))
+	props.TokenCodeTable.GrantReadWriteData(tokenAuth)
 
 	awscdk.NewCfnOutput(stack, jsii.String("MoonenvApiGatewayUrl"), &awscdk.CfnOutputProps{Value: api.Url()})
 }
