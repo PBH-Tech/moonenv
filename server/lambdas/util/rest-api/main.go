@@ -1,8 +1,11 @@
-package handle
+package restApi
 
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
+
+	"github.com/aws/aws-lambda-go/events"
 )
 
 func ApiResponse(statusCode int, body interface{}) (Response, error) {
@@ -18,3 +21,10 @@ func ApiResponse(statusCode int, body interface{}) (Response, error) {
 
 	return resp, nil
 }
+
+func UnhandledMethod() (Response, error) {
+	return ApiResponse(http.StatusMethodNotAllowed, "Method not allowed")
+}
+
+type Request events.APIGatewayV2HTTPRequest
+type Response events.APIGatewayV2HTTPResponse

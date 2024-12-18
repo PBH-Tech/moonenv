@@ -12,12 +12,12 @@ type CdkS3StackProps struct {
 }
 
 func NewS3Bucket(scope constructs.Construct, id string, props *CdkS3StackProps) awss3.Bucket {
-	var sprops awscdk.StackProps
+	var sProps awscdk.StackProps
 
 	if props != nil {
-		sprops = props.StackProps
+		sProps = props.StackProps
 	}
-	stack := awscdk.NewStack(scope, &id, &sprops)
+	stack := awscdk.NewStack(scope, &id, &sProps)
 
 	bucket := awss3.NewBucket(stack, jsii.String("moonenv-bucket"), &awss3.BucketProps{
 		BucketName: jsii.String("moonenv-bucket"),

@@ -15,12 +15,12 @@ type CdkApiGatewayProps struct {
 }
 
 func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGatewayProps) {
-	var sprops awscdk.StackProps
+	var sProps awscdk.StackProps
 
 	if props != nil {
-		sprops = props.StackProps
+		sProps = props.StackProps
 	}
-	stack := awscdk.NewStack(scope, &id, &sprops)
+	stack := awscdk.NewStack(scope, &id, &sProps)
 
 	api := awsapigatewayv2.NewHttpApi(stack, jsii.String("cdk-moonenv-api"), &awsapigatewayv2.HttpApiProps{
 		CorsPreflight: &awsapigatewayv2.CorsPreflightOptions{

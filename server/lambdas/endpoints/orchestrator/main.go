@@ -4,8 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/PBH-Tech/moonenv/lambdas/handle"
-	orchestratorService "github.com/PBH-Tech/moonenv/lambdas/orchestrator-service"
+	restApi "github.com/PBH-Tech/moonenv/lambdas/util/rest-api"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
@@ -13,13 +12,13 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, req handle.Request) (handle.Response, error) {
+func handler(ctx context.Context, req restApi.Request) (restApi.Response, error) {
 	switch req.RequestContext.HTTP.Method {
 	case http.MethodGet:
-		return orchestratorService.PullCommand(req)
+		return PullCommand(req)
 	case http.MethodPost:
-		return orchestratorService.PushCommand(req)
+		return PushCommand(req)
 	default:
-		return handle.UnhandledMethod()
+		return restApi.UnhandledMethod()
 	}
 }
