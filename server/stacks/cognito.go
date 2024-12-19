@@ -52,6 +52,7 @@ func NewCognitoStack(scope constructs.Construct, id string, props *CdkCognitoSta
 		AllowedOAuthFlowsUserPoolClient: jsii.Bool(true),
 		UserPoolId:                      userPoolId,
 		SupportedIdentityProviders:      jsii.Strings("COGNITO"),
+		EnableTokenRevocation:           jsii.Bool(true),
 	})
 
 	awscdk.NewCfnOutput(stack, jsii.String("MoonenvPoolClientId"), &awscdk.CfnOutputProps{Value: poolClient.GetAtt(jsii.String("ClientId")).ToString()})

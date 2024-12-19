@@ -51,6 +51,9 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 	})
 
 	callbackUri := fmt.Sprintf("%sauth/callback", *api.Url())
+	//TODO: improve this
+	// Tried to get this value from cognito using SSM, but it makes cycle dependency
+	cognitoUrl := "https://moonenv.auth.ap-southeast-2.amazoncognito.com"
 	tokenAuth := awslambdago.NewGoFunction(stack, jsii.String("MoonenvAuthToken"), &awslambdago.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
 		Entry:        jsii.String("./lambdas/endpoints/auth/token"),
@@ -59,9 +62,8 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 			"TokenCodeTableName":       props.TokenCodeTable.TableName(),
 			"CallbackUri":              jsii.String(callbackUri),
 			"PollingIntervalInSeconds": jsii.String(strconv.FormatInt(int64(3), 10)),
-			//TODO: improve this
-			// Tried to get this value from cognito using SSM, but it makes cycle dependency
-			"CognitoUrl": jsii.String("https://moonenv.auth.ap-southeast-2.amazoncognito.com"),
+
+			"CognitoUrl": jsii.String(cognitoUrl),
 		},
 	})
 	callbackAuth := awslambdago.NewGoFunction(stack, jsii.Sprintf("MoonenvAuthCallback"), &awslambdago.GoFunctionProps{
@@ -70,6 +72,15 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 		FunctionName: jsii.Sprintf("moonenv-auth-callback"),
 		Environment: &map[string]*string{
 			"StateIndexName":     props.TokenCodeStateIndexName,
+			"TokenCodeTableName": props.TokenCodeTable.TableName(),
+		},
+	})
+	refreshTokenAuth := awslambdago.NewGoFunction(stack, jsii.Sprintf("MoonenvAuthRefreshToken"), &awslambdago.GoFunctionProps{
+		MemorySize:   jsii.Number(128),
+		Entry:        jsii.Sprintf("./lambdas/endpoints/auth/refresh"),
+		FunctionName: jsii.Sprintf("moonenv-auth-refresh-token"),
+		Environment: &map[string]*string{
+			"CognitoUrl":         jsii.String(cognitoUrl),
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
 	})
@@ -92,10 +103,16 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 		Methods:     &[]awsapigatewayv2.HttpMethod{awsapigatewayv2.HttpMethod_GET},
 		Integration: awsapigatewayv2integrations.NewHttpLambdaIntegration(jsii.Sprintf("callback"), callbackAuth, &awsapigatewayv2integrations.HttpLambdaIntegrationProps{}),
 	})
+	api.AddRoutes(&awsapigatewayv2.AddRoutesOptions{
+		Path:        jsii.Sprintf("/auth/refresh-token"),
+		Methods:     &[]awsapigatewayv2.HttpMethod{awsapigatewayv2.HttpMethod_POST},
+		Integration: awsapigatewayv2integrations.NewHttpLambdaIntegration(jsii.Sprintf("callback"), refreshTokenAuth, &awsapigatewayv2integrations.HttpLambdaIntegrationProps{}),
+	})
 
 	props.CdkLambdaStackFunctions.downloadFileFunc.GrantInvoke(orchestrator.Role())
 	props.CdkLambdaStackFunctions.uploadFileFunc.GrantInvoke(orchestrator.Role())
 	props.CognitoStack.SetCallbackUrLs(jsii.Strings(callbackUri))
+	props.TokenCodeTable.GrantReadWriteData(refreshTokenAuth)
 	props.TokenCodeTable.GrantReadWriteData(tokenAuth)
 	props.TokenCodeTable.GrantReadWriteData(callbackAuth)
 

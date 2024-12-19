@@ -130,6 +130,7 @@ func getToken(token tokenCode.TokenCode) (restApi.Response, error) {
 	if err != nil {
 		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Error while sending HTTP request")
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
