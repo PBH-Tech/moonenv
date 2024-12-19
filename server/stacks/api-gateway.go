@@ -84,6 +84,15 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
 	})
+	revokeTokenAuth := awslambdago.NewGoFunction(stack, jsii.Sprintf("MoonenvAuthRevokeToken"), &awslambdago.GoFunctionProps{
+		MemorySize:   jsii.Number(128),
+		Entry:        jsii.Sprintf("./lambdas/endpoints/auth/revoke"),
+		FunctionName: jsii.Sprintf("moonenv-auth-revoke-token"),
+		Environment: &map[string]*string{
+			"CognitoUrl":         jsii.String(cognitoUrl),
+			"TokenCodeTableName": props.TokenCodeTable.TableName(),
+		},
+	})
 
 	api.AddRoutes(&awsapigatewayv2.AddRoutesOptions{
 		Path: jsii.String("/orgs/{org}/repos/{repo}"),
@@ -106,7 +115,12 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 	api.AddRoutes(&awsapigatewayv2.AddRoutesOptions{
 		Path:        jsii.Sprintf("/auth/refresh-token"),
 		Methods:     &[]awsapigatewayv2.HttpMethod{awsapigatewayv2.HttpMethod_POST},
-		Integration: awsapigatewayv2integrations.NewHttpLambdaIntegration(jsii.Sprintf("callback"), refreshTokenAuth, &awsapigatewayv2integrations.HttpLambdaIntegrationProps{}),
+		Integration: awsapigatewayv2integrations.NewHttpLambdaIntegration(jsii.Sprintf("refresh-token"), refreshTokenAuth, &awsapigatewayv2integrations.HttpLambdaIntegrationProps{}),
+	})
+	api.AddRoutes(&awsapigatewayv2.AddRoutesOptions{
+		Path:        jsii.Sprintf("/auth/revoke"),
+		Methods:     &[]awsapigatewayv2.HttpMethod{awsapigatewayv2.HttpMethod_POST},
+		Integration: awsapigatewayv2integrations.NewHttpLambdaIntegration(jsii.Sprintf("revoke-token"), revokeTokenAuth, &awsapigatewayv2integrations.HttpLambdaIntegrationProps{}),
 	})
 
 	props.CdkLambdaStackFunctions.downloadFileFunc.GrantInvoke(orchestrator.Role())
@@ -115,6 +129,7 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 	props.TokenCodeTable.GrantReadWriteData(refreshTokenAuth)
 	props.TokenCodeTable.GrantReadWriteData(tokenAuth)
 	props.TokenCodeTable.GrantReadWriteData(callbackAuth)
+	props.TokenCodeTable.GrantReadWriteData(revokeTokenAuth)
 
 	awscdk.NewCfnOutput(stack, jsii.String("MoonenvApiGatewayUrl"), &awscdk.CfnOutputProps{Value: api.Url()})
 }
