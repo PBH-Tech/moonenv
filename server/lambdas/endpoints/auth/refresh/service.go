@@ -59,7 +59,7 @@ func getToken(clientId string, refreshToken string) (restApi.Response, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return restApi.BuildErrorResponse(http.StatusInternalServerError, "HTTP request did not return OK")
+		return restApi.BuildErrorResponse(http.StatusUnauthorized, "Invalid refresh token")
 	}
 
 	var tokenResponse CognitoRefreshTokenResponse
