@@ -65,8 +65,13 @@ func RequestSetOfToken(clientId string) (restApi.Response, error) {
 		return restApi.ApiResponse(http.StatusBadRequest, err.Error())
 	}
 
-	//TODO: don't return the whole token object
-	return restApi.ApiResponse(http.StatusCreated, token)
+	return restApi.ApiResponse(http.StatusCreated, map[string]string{
+		"authorizationUri": token.AuthorizationUri,
+		"deviceCode":       token.DeviceCode,
+		"expiresAt":        token.ExpireAt,
+		"lastCheckedAt":    token.LastCheckedAt,
+		"status":           token.Status,
+	})
 }
 
 func RequestJWTs(deviceCode string, clientId string) (restApi.Response, error) {
