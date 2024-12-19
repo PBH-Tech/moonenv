@@ -9,10 +9,6 @@ import (
 	restApi "github.com/PBH-Tech/moonenv/lambdas/util/rest-api"
 )
 
-type RefreshTokenBodyRequest struct {
-	RefreshToken string `json:"refreshToken"`
-}
-
 type CognitoRefreshTokenResponse struct {
 	IdToken     string `json:"id_token"`
 	AccessToken string `json:"access_token"`
@@ -27,14 +23,7 @@ type APIResponse struct {
 	TokenType   string `json:"tokenType"`
 }
 
-func RefreshToken(deviceCode string, request restApi.Request) (restApi.Response, error) {
-	var data RefreshTokenBodyRequest
-
-	err := json.Unmarshal([]byte(request.Body), &data)
-
-	if err != nil {
-		return restApi.BuildErrorResponse(http.StatusBadRequest, "Invalid body request. Refresh token field is required")
-	}
+func RefreshToken(deviceCode string, refreshToken string) (restApi.Response, error) {
 
 	token, err := tokenCode.GetToken(deviceCode)
 
@@ -42,7 +31,7 @@ func RefreshToken(deviceCode string, request restApi.Request) (restApi.Response,
 		return restApi.BuildErrorResponse(http.StatusNotFound, "Device code not found")
 	}
 
-	return getToken(token.ClientId, data.RefreshToken)
+	return getToken(token.ClientId, refreshToken)
 }
 
 func getToken(clientId string, refreshToken string) (restApi.Response, error) {
