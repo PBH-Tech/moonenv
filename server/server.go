@@ -6,6 +6,7 @@ import (
 
 	"github.com/PBH-Tech/moonenv/stacks"
 	"github.com/aws/aws-cdk-go/awscdk"
+	"github.com/aws/aws-cdk-go/awscdk/awsdynamodb"
 	"github.com/aws/jsii-runtime-go"
 )
 
@@ -18,12 +19,12 @@ func main() {
 
 	app := awscdk.NewApp(nil)
 
-	bucket := stacks.NewS3Bucket(app, "CdkS3Stack", &stacks.CdkS3StackProps{
+	bucket := stacks.NewS3BucketStack(app, "MoonenvS3Stack", &stacks.CdkS3StackProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
 			StackName: jsii.String("moonenv-s3"),
 		}})
-	lambdas, err := stacks.NewCdkLambdaStack(app, "CdkLambdaStack", &stacks.CdkLambdaStackProps{
+	lambdas, err := stacks.NewCdkLambdaStack(app, "MoonenvLambdaStack", &stacks.CdkLambdaStackProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
 			StackName: jsii.String("moonenv-lambda"),
@@ -35,12 +36,40 @@ func main() {
 		errors.New(err.Error())
 	}
 
-	stacks.NewApiGatewayStack(app, "CdkApiGatewayStack", &stacks.CdkApiGatewayProps{
+	tokenCodeTable := stacks.NewTableStack(app, "MoonenvTokenCodeTable", &stacks.CdkTableStackProps{
+		StackProps: awscdk.StackProps{
+			Env:       env(),
+			StackName: jsii.String("moonenv-token-code-table"),
+		},
+		TableName:    *jsii.String("moonenv-token-code"),
+		PartitionKey: awsdynamodb.Attribute{Name: jsii.String("deviceCode"), Type: awsdynamodb.AttributeType_STRING},
+	})
+
+	tokenCodeStateIndexName := jsii.Sprintf("state-index")
+	tokenCodeTable.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
+		IndexName: tokenCodeStateIndexName,
+		PartitionKey: &awsdynamodb.Attribute{
+			Name: jsii.String("state"),
+			Type: awsdynamodb.AttributeType_STRING,
+		},
+	})
+
+	cognitoStack := stacks.NewCognitoStack(app, "MoonenvCognitoStack", &stacks.CdkCognitoStackProps{
+		StackProps: awscdk.StackProps{
+			Env:       env(),
+			StackName: jsii.String("moonenv-cognito"),
+		},
+	})
+
+	stacks.NewApiGatewayStack(app, "MoonenvApiGatewayStack", &stacks.CdkApiGatewayProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
 			StackName: jsii.String("moonenv-api-gateway"),
 		},
 		CdkLambdaStackFunctions: *lambdas,
+		TokenCodeTable:          tokenCodeTable,
+		CognitoStack:            *cognitoStack,
+		TokenCodeStateIndexName: tokenCodeStateIndexName,
 	})
 
 	app.Synth(nil)

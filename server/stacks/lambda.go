@@ -33,15 +33,17 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 	}
 
 	downloadFileFunc := awslambdago.NewGoFunction(stack, jsii.String("download-file-func"), &awslambdago.GoFunctionProps{
-		MemorySize:  jsii.Number(128),
-		Entry:       jsii.String("./lambdas/download-file"),
-		Environment: &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
+		MemorySize:   jsii.Number(128),
+		Entry:        jsii.String("./lambdas/download-file"),
+		Environment:  &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
+		FunctionName: jsii.String("moonenv-download-file"),
 	})
 
 	uploadFileFunc := awslambdago.NewGoFunction(stack, jsii.String("upload-file-func"), &awslambdago.GoFunctionProps{
-		MemorySize:  jsii.Number(128),
-		Entry:       jsii.String("./lambdas/upload-file"),
-		Environment: &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
+		MemorySize:   jsii.Number(128),
+		Entry:        jsii.String("./lambdas/upload-file"),
+		Environment:  &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
+		FunctionName: jsii.String("moonenv-upload-file"),
 	})
 
 	// Grant read permissions to the download functioni

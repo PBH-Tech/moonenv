@@ -2,8 +2,13 @@
   "cSpell.words": [
     "awsapigatewayv",
     "awscdk",
+    "awscognito",
+    "awsdynamodb",
     "awslambdago",
+    "awss",
+    "awsssm",
     "confy",
+    "dynamodbattribute",
     "jsii",
     "moonenv",
     "Runtimes"
