@@ -4,7 +4,6 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk"
 	"github.com/aws/aws-cdk-go/awscdk/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/awsdynamodb"
-	"github.com/aws/aws-cdk-go/awscdk/awslambdago"
 	"github.com/aws/aws-cdk-go/awscdk/awsroute53"
 	"github.com/aws/aws-cdk-go/awscdk/awsroute53targets"
 	"github.com/aws/constructs-go/constructs/v3"
@@ -44,31 +43,26 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 		Target:     awsroute53.AddressRecordTarget_FromAlias(awsroute53targets.NewApiGatewayDomain(customDomain)),
 	})
 
-	orchestrator := awslambdago.NewGoFunction(stack, jsii.String("MoonenvOrchestrator"), &awslambdago.GoFunctionProps{
-		MemorySize:   jsii.Number(128),
-		Entry:        jsii.String("./lambdas/endpoints/orchestrator"),
-		FunctionName: jsii.String("moonenv-orchestrator"),
-		Environment: &map[string]*string{
-			"AwsRegion":        props.StackProps.Env.Region,
-			"UploadFuncName":   props.CdkLambdaStackFunctions.uploadFileFunc.FunctionArn(),
-			"DownloadFuncName": props.CdkLambdaStackFunctions.downloadFileFunc.FunctionArn(),
-		},
-	})
-
-	// api.AddRoutes(&awsapigatewayv2.AddRoutesOptions{
-	// 	Path: jsii.String("/orgs/{org}/repos/{repo}"),
-	// 	Methods: &[]awsapigatewayv2.HttpMethod{
-	// 		awsapigatewayv2.HttpMethod_GET,
-	// 		awsapigatewayv2.HttpMethod_POST,
-	// 	},
-	// 	Integration: awsapigatewayv2integrations.NewHttpLambdaIntegration(jsii.String("orchestrator"), orchestrator, &awsapigatewayv2integrations.HttpLambdaIntegrationProps{}),
-	// })
-
 	createAuthResource(api, props)
-	props.CdkLambdaStackFunctions.downloadFileFunc.GrantInvoke(orchestrator.Role())
-	props.CdkLambdaStackFunctions.uploadFileFunc.GrantInvoke(orchestrator.Role())
+	createOrgResource(api, props)
 
 	awscdk.NewCfnOutput(stack, jsii.String("MoonenvApiGatewayUrl"), &awscdk.CfnOutputProps{Value: api.Url()})
+}
+
+func createOrgResource(api awsapigateway.RestApi, props *CdkApiGatewayProps) {
+	lambdas := props.CdkLambdaStackFunctions
+	orgResource := api.Root().AddResource(jsii.String("orgs"), &awsapigateway.ResourceOptions{})
+	orgIdResource := orgResource.AddResource(jsii.String("{orgId}"), &awsapigateway.ResourceOptions{})
+	repoResource := orgIdResource.AddResource(jsii.String("repos"), &awsapigateway.ResourceOptions{})
+	repoIdResource := repoResource.AddResource(jsii.String("{repoId}"), &awsapigateway.ResourceOptions{})
+
+	repoIdResource.AddMethod(jsii.String(*jsii.String("GET")),
+		awsapigateway.NewLambdaIntegration(lambdas.pullCommand, &awsapigateway.LambdaIntegrationOptions{}),
+		&awsapigateway.MethodOptions{})
+	repoIdResource.AddMethod(jsii.String(*jsii.String("POST")),
+		awsapigateway.NewLambdaIntegration(lambdas.pushCommand, &awsapigateway.LambdaIntegrationOptions{}),
+		&awsapigateway.MethodOptions{})
+
 }
 
 func createAuthResource(api awsapigateway.RestApi, props *CdkApiGatewayProps) {

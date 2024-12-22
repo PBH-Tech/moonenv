@@ -27,6 +27,8 @@ type CdkLambdaStackFunctions struct {
 	callbackAuth     awslambdago.GoFunction
 	refreshTokenAuth awslambdago.GoFunction
 	revokeTokenAuth  awslambdago.GoFunction
+	pullCommand      awslambdago.GoFunction
+	pushCommand      awslambdago.GoFunction
 }
 
 func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaStackProps) *CdkLambdaStackFunctions {
@@ -89,12 +91,30 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
 	})
+	pullCommand := awslambdago.NewGoFunction(stack, jsii.String("MoonenvPullCommand"), &awslambdago.GoFunctionProps{
+		MemorySize:   jsii.Number(128),
+		Entry:        jsii.String("./lambdas/endpoints/orchestrator/pull"),
+		FunctionName: jsii.String("moonenv-pull-command"),
+		Environment: &map[string]*string{
+			"AwsRegion":        props.StackProps.Env.Region,
+			"DownloadFuncName": downloadFileFunc.FunctionArn(),
+		},
+	})
+	pushCommand := awslambdago.NewGoFunction(stack, jsii.String("MoonenvPushCommand"), &awslambdago.GoFunctionProps{
+		MemorySize:   jsii.Number(128),
+		Entry:        jsii.String("./lambdas/endpoints/orchestrator/push"),
+		FunctionName: jsii.String("moonenv-push-command"),
+		Environment: &map[string]*string{
+			"AwsRegion":      props.StackProps.Env.Region,
+			"UploadFuncName": uploadFileFunc.FunctionArn(),
+		},
+	})
 
-	// Grant read permissions to the download function
 	props.Bucket.GrantRead(downloadFileFunc.Role(), nil)
-
-	// Grant write permissions to the upload function
 	props.Bucket.GrantWrite(uploadFileFunc.Role(), nil)
+
+	downloadFileFunc.GrantInvoke(pullCommand.Role())
+	uploadFileFunc.GrantInvoke(pushCommand.Role())
 
 	authTypes := []awslambdago.GoFunction{refreshTokenAuth, tokenAuth, callbackAuth, revokeTokenAuth}
 
@@ -109,5 +129,7 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 		callbackAuth:     callbackAuth,
 		refreshTokenAuth: refreshTokenAuth,
 		revokeTokenAuth:  revokeTokenAuth,
+		pullCommand:      pullCommand,
+		pushCommand:      pushCommand,
 	}
 }
