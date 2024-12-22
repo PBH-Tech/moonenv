@@ -34,5 +34,5 @@ func BuildErrorResponse(statusCode int, message string) (Response, error) {
 	return ApiResponse(statusCode, map[string]string{"message": message})
 }
 
-type Request events.APIGatewayV2HTTPRequest
-type Response events.APIGatewayV2HTTPResponse
+type Request events.APIGatewayProxyRequest
+type Response events.APIGatewayProxyResponse
