@@ -4,6 +4,7 @@
     "awsapigatewayintegrations",
     "awsapigatewayv",
     "awscdk",
+    "awscdklambdagoalpha",
     "awscertificatemanager",
     "awscognito",
     "awsdynamodb",

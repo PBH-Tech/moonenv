@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
+	"github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -40,28 +40,23 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 	}
 	stack := awscdk.NewStack(scope, &id, &sProps)
 
-	downloadFileFunc := awslambda.NewFunction(stack, jsii.String("download-file-func"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+	downloadFileFunc := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("MoonenvDownloadFile"), &awscdklambdagoalpha.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/download-file"), &awss3assets.AssetOptions{}),
+		Entry:        jsii.String("./lambdas/download-file"),
 		Environment:  &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
 		FunctionName: jsii.String("moonenv-download-file"),
-		Handler:      jsii.String("main.handler"),
 	})
 
-	uploadFileFunc := awslambda.NewFunction(stack, jsii.String("upload-file-func"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+	uploadFileFunc := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("MoonenvUploadFile"), &awscdklambdagoalpha.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/upload-file"), &awss3assets.AssetOptions{}),
+		Entry:        jsii.String("./lambdas/upload-file"),
 		Environment:  &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
 		FunctionName: jsii.String("moonenv-upload-file"),
-		Handler:      jsii.String("main.handler"),
 	})
 
-	tokenAuth := awslambda.NewFunction(stack, jsii.String("MoonenvAuthToken"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+	tokenAuth := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("MoonenvAuthToken"), &awscdklambdagoalpha.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/endpoints/auth/token"), &awss3assets.AssetOptions{}),
+		Entry:        jsii.String("./lambdas/endpoints/auth/token"),
 		FunctionName: jsii.String("moonenv-auth-token"),
 		Environment: &map[string]*string{
 			"TokenCodeTableName":       props.TokenCodeTable.TableName(),
@@ -69,62 +64,56 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 			"CognitoUrl":               props.AuthSubdomain,
 			"CallbackUri":              GetApiGatewayCallbackUri(props.RestApiSubdomain),
 		},
-		Handler: jsii.String("main.handler"),
 	})
-	callbackAuth := awslambda.NewFunction(stack, jsii.Sprintf("MoonenvAuthCallback"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+
+	callbackAuth := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("MoonenvAuthCallback"), &awscdklambdagoalpha.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
-		Code:         awslambda.AssetCode_FromAsset(jsii.Sprintf("./lambdas/endpoints/auth/callback"), &awss3assets.AssetOptions{}),
+		Entry:        jsii.Sprintf("./lambdas/endpoints/auth/callback"),
 		FunctionName: jsii.Sprintf("moonenv-auth-callback"),
 		Environment: &map[string]*string{
 			"StateIndexName":     props.TokenCodeStateIndexName,
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
-		Handler: jsii.String("main.handler"),
 	})
-	refreshTokenAuth := awslambda.NewFunction(stack, jsii.Sprintf("MoonenvAuthRefreshToken"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+
+	refreshTokenAuth := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("MoonenvAuthRefreshToken"), &awscdklambdagoalpha.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
-		Code:         awslambda.AssetCode_FromAsset(jsii.Sprintf("./lambdas/endpoints/auth/refresh"), &awss3assets.AssetOptions{}),
+		Entry:        jsii.Sprintf("./lambdas/endpoints/auth/refresh"),
 		FunctionName: jsii.Sprintf("moonenv-auth-refresh-token"),
 		Environment: &map[string]*string{
 			"CognitoUrl":         props.AuthSubdomain,
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
-		Handler: jsii.String("main.handler"),
 	})
-	revokeTokenAuth := awslambda.NewFunction(stack, jsii.Sprintf("MoonenvAuthRevokeToken"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+
+	revokeTokenAuth := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("MoonenvAuthRevokeToken"), &awscdklambdagoalpha.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
-		Code:         awslambda.AssetCode_FromAsset(jsii.Sprintf("./lambdas/endpoints/auth/revoke"), &awss3assets.AssetOptions{}),
+		Entry:        jsii.Sprintf("./lambdas/endpoints/auth/revoke"),
 		FunctionName: jsii.Sprintf("moonenv-auth-revoke-token"),
 		Environment: &map[string]*string{
 			"CognitoUrl":         props.AuthSubdomain,
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
-		Handler: jsii.String("main.handler"),
 	})
-	pullCommand := awslambda.NewFunction(stack, jsii.String("MoonenvPullCommand"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+
+	pullCommand := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("MoonenvPullCommand"), &awscdklambdagoalpha.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/endpoints/orchestrator/pull"), &awss3assets.AssetOptions{}),
+		Entry:        jsii.String("./lambdas/endpoints/orchestrator/pull"),
 		FunctionName: jsii.String("moonenv-pull-command"),
 		Environment: &map[string]*string{
 			"AwsRegion":        props.StackProps.Env.Region,
 			"DownloadFuncName": downloadFileFunc.FunctionArn(),
 		},
-		Handler: jsii.String("main.handler"),
 	})
-	pushCommand := awslambda.NewFunction(stack, jsii.String("MoonenvPushCommand"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_GO_1_X(),
+
+	pushCommand := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("MoonenvPushCommand"), &awscdklambdagoalpha.GoFunctionProps{
 		MemorySize:   jsii.Number(128),
-		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/endpoints/orchestrator/push"), &awss3assets.AssetOptions{}),
+		Entry:        jsii.String("./lambdas/endpoints/orchestrator/push"),
 		FunctionName: jsii.String("moonenv-push-command"),
 		Environment: &map[string]*string{
 			"AwsRegion":      props.StackProps.Env.Region,
 			"UploadFuncName": uploadFileFunc.FunctionArn(),
 		},
-		Handler: jsii.String("main.handler"),
 	})
 
 	props.Bucket.GrantRead(downloadFileFunc.Role(), nil)

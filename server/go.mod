@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.173.2-alpha.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.6 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.39 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.15 // indirect
