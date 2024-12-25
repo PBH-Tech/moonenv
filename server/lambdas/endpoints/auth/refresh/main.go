@@ -21,7 +21,7 @@ func main() {
 func handler(_ctx context.Context, req restApi.Request) (restApi.Response, error) {
 	var (
 		deviceCode, deviceCodeOk = req.QueryStringParameters["device_code"]
-		token, tokenOk           = req.Headers["authorization"]
+		token, tokenOk           = req.Headers["Authorization"]
 	)
 
 	if !tokenOk {
