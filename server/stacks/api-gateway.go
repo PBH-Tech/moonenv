@@ -3,6 +3,7 @@ package stacks
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscognito"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
@@ -44,13 +45,23 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 	})
 
 	createAuthResource(api, props)
-	createOrgResource(api, props)
+	createOrgResource(stack, api, props)
 
 	awscdk.NewCfnOutput(stack, jsii.String("MoonenvApiGatewayUrl"), &awscdk.CfnOutputProps{Value: api.Url()})
 }
 
-func createOrgResource(api awsapigateway.RestApi, props *CdkApiGatewayProps) {
+func getAuthorizer(stack awscdk.Stack, userPool awscognito.UserPool) awsapigateway.CognitoUserPoolsAuthorizer {
+	authorizer := awsapigateway.NewCognitoUserPoolsAuthorizer(stack, jsii.String("MoonenvCognitoAuthorizer"), &awsapigateway.CognitoUserPoolsAuthorizerProps{
+		CognitoUserPools: &[]awscognito.IUserPool{userPool},
+		AuthorizerName:   jsii.String("moonenv-cognito-authorizer"),
+	})
+
+	return authorizer
+}
+
+func createOrgResource(stack awscdk.Stack, api awsapigateway.RestApi, props *CdkApiGatewayProps) {
 	lambdas := props.CdkLambdaStackFunctions
+	authorizer := getAuthorizer(stack, props.CognitoStack.UserPool)
 	orgResource := api.Root().AddResource(jsii.String("orgs"), &awsapigateway.ResourceOptions{})
 	orgIdResource := orgResource.AddResource(jsii.String("{orgId}"), &awsapigateway.ResourceOptions{})
 	repoResource := orgIdResource.AddResource(jsii.String("repos"), &awsapigateway.ResourceOptions{})
@@ -58,10 +69,10 @@ func createOrgResource(api awsapigateway.RestApi, props *CdkApiGatewayProps) {
 
 	repoIdResource.AddMethod(jsii.String(*jsii.String("GET")),
 		awsapigateway.NewLambdaIntegration(lambdas.pullCommand, &awsapigateway.LambdaIntegrationOptions{}),
-		&awsapigateway.MethodOptions{})
+		&awsapigateway.MethodOptions{Authorizer: authorizer})
 	repoIdResource.AddMethod(jsii.String(*jsii.String("POST")),
 		awsapigateway.NewLambdaIntegration(lambdas.pushCommand, &awsapigateway.LambdaIntegrationOptions{}),
-		&awsapigateway.MethodOptions{})
+		&awsapigateway.MethodOptions{Authorizer: authorizer})
 
 }
 

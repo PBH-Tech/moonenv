@@ -17,6 +17,7 @@ type CdkCognitoStackProps struct {
 
 type CdkCognitoStackResource struct {
 	awscognito.CfnUserPoolClient
+	awscognito.UserPool
 }
 
 func NewCognitoStack(scope constructs.Construct, id string, props *CdkCognitoStackProps) *CdkCognitoStackResource {
@@ -71,5 +72,6 @@ func NewCognitoStack(scope constructs.Construct, id string, props *CdkCognitoSta
 
 	return &CdkCognitoStackResource{
 		CfnUserPoolClient: poolClient,
+		UserPool:          userPool,
 	}
 }
