@@ -1,17 +1,25 @@
 {
   "cSpell.words": [
+    "awsapigateway",
+    "awsapigatewayintegrations",
     "awsapigatewayv",
     "awscdk",
+    "awscdklambdagoalpha",
+    "awscertificatemanager",
     "awscognito",
     "awsdynamodb",
+    "awslambda",
     "awslambdago",
+    "awsroute",
     "awss",
     "awsssm",
     "confy",
     "dynamodbattribute",
+    "godotenv",
     "jsii",
     "moonenv",
-    "Runtimes"
+    "Runtimes",
+    "sauth"
   ],
   // format all files on save if a formatter is available
   "editor.formatOnSave": true,

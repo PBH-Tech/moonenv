@@ -23,11 +23,11 @@ func handler(ctx context.Context, event *bucketService.UploadFileData) (restApi.
 	cfg, err := config.LoadDefaultConfig(ctx)
 
 	if err != nil {
-		return restApi.ApiResponse(http.StatusInternalServerError, "Failed to load SDK Configuration")
+		return restApi.ApiResponse(http.StatusInternalServerError, "Failed to load SDK Configuration"), nil
 	}
 
 	s3Client = s3.NewFromConfig(cfg)
 
-	return bucketService.UploadToS3Bucket(ctx, *event, s3Client)
+	return bucketService.UploadToS3Bucket(ctx, *event, s3Client), nil
 
 }

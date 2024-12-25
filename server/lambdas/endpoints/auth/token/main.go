@@ -43,19 +43,19 @@ func handler(_ctx context.Context, req restApi.Request) (restApi.Response, error
 	)
 
 	if !clientIdOk {
-		return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "client_id query parameter is required"})
+		return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "client_id query parameter is required"}), nil
 	}
 
 	/// TODO:improve it
 	if !deviceCodeOk {
-		return RequestSetOfToken(clientId)
+		return RequestSetOfToken(clientId), nil
 	} else if grantTypeOk && deviceCodeOk {
 		if grantType == deviceCodeGrantType {
-			return RequestJWTs(deviceCode, clientId)
+			return RequestJWTs(deviceCode, clientId), nil
 		} else {
-			return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "Unsupported grant type"})
+			return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "Unsupported grant type"}), nil
 		}
 	} else {
-		return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "Missing parameters"})
+		return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "Missing parameters"}), nil
 	}
 }
