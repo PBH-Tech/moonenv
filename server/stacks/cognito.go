@@ -1,11 +1,11 @@
 package stacks
 
 import (
-	"github.com/aws/aws-cdk-go/awscdk"
-	"github.com/aws/aws-cdk-go/awscdk/awscognito"
-	"github.com/aws/aws-cdk-go/awscdk/awsroute53"
-	"github.com/aws/aws-cdk-go/awscdk/awsroute53targets"
-	"github.com/aws/constructs-go/constructs/v3"
+	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscognito"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
+	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
 
@@ -63,9 +63,9 @@ func NewCognitoStack(scope constructs.Construct, id string, props *CdkCognitoSta
 	awsroute53.NewARecord(stack, jsii.String("MoonenvUserPoolARecord"), &awsroute53.ARecordProps{
 		Zone:       props.CdkRoute53StackResource.IHostedZone,
 		RecordName: props.AuthSubdomain,
-		Target:     awsroute53.AddressRecordTarget_FromAlias(awsroute53targets.NewUserPoolDomainTarget(userPoolDomain)),
+		Target:     awsroute53.RecordTarget_FromAlias(awsroute53targets.NewUserPoolDomainTarget(userPoolDomain)),
 	})
-	awscdk.NewCfnOutput(stack, jsii.String("MoonenvPoolClientId"), &awscdk.CfnOutputProps{Value: poolClient.GetAtt(jsii.String("ClientId")).ToString()})
+	awscdk.NewCfnOutput(stack, jsii.String("MoonenvPoolClientId"), &awscdk.CfnOutputProps{Value: poolClient.GetAtt(jsii.String("ClientId"), awscdk.ResolutionTypeHint_STRING).ToString()})
 	awscdk.NewCfnOutput(stack, jsii.String("MoonenvUserPool"), &awscdk.CfnOutputProps{Value: userPoolId})
 	awscdk.NewCfnOutput(stack, jsii.String("MoonenvCognitoDomain"), &awscdk.CfnOutputProps{Value: userPoolDomain.DomainName()})
 

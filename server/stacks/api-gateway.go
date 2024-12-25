@@ -1,12 +1,12 @@
 package stacks
 
 import (
-	"github.com/aws/aws-cdk-go/awscdk"
-	"github.com/aws/aws-cdk-go/awscdk/awsapigateway"
-	"github.com/aws/aws-cdk-go/awscdk/awsdynamodb"
-	"github.com/aws/aws-cdk-go/awscdk/awsroute53"
-	"github.com/aws/aws-cdk-go/awscdk/awsroute53targets"
-	"github.com/aws/constructs-go/constructs/v3"
+	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
+	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
 
@@ -40,7 +40,7 @@ func NewApiGatewayStack(scope constructs.Construct, id string, props *CdkApiGate
 	awsroute53.NewARecord(stack, jsii.String("MoonenvRestApiARecord"), &awsroute53.ARecordProps{
 		Zone:       props.CdkRoute53StackResource.IHostedZone,
 		RecordName: props.RestApiSubdomain,
-		Target:     awsroute53.AddressRecordTarget_FromAlias(awsroute53targets.NewApiGatewayDomain(customDomain)),
+		Target:     awsroute53.RecordTarget_FromAlias(awsroute53targets.NewApiGatewayDomain(customDomain)),
 	})
 
 	createAuthResource(api, props)

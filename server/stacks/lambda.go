@@ -3,11 +3,12 @@ package stacks
 import (
 	"strconv"
 
-	"github.com/aws/aws-cdk-go/awscdk"
-	"github.com/aws/aws-cdk-go/awscdk/awsdynamodb"
-	"github.com/aws/aws-cdk-go/awscdk/awslambdago"
-	"github.com/aws/aws-cdk-go/awscdk/awss3"
-	"github.com/aws/constructs-go/constructs/v3"
+	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
+	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
 
@@ -21,14 +22,14 @@ type CdkLambdaStackProps struct {
 }
 
 type CdkLambdaStackFunctions struct {
-	uploadFileFunc   awslambdago.GoFunction
-	downloadFileFunc awslambdago.GoFunction
-	tokenAuth        awslambdago.GoFunction
-	callbackAuth     awslambdago.GoFunction
-	refreshTokenAuth awslambdago.GoFunction
-	revokeTokenAuth  awslambdago.GoFunction
-	pullCommand      awslambdago.GoFunction
-	pushCommand      awslambdago.GoFunction
+	uploadFileFunc   awslambda.Function
+	downloadFileFunc awslambda.Function
+	tokenAuth        awslambda.Function
+	callbackAuth     awslambda.Function
+	refreshTokenAuth awslambda.Function
+	revokeTokenAuth  awslambda.Function
+	pullCommand      awslambda.Function
+	pushCommand      awslambda.Function
 }
 
 func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaStackProps) *CdkLambdaStackFunctions {
@@ -39,23 +40,28 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 	}
 	stack := awscdk.NewStack(scope, &id, &sProps)
 
-	downloadFileFunc := awslambdago.NewGoFunction(stack, jsii.String("download-file-func"), &awslambdago.GoFunctionProps{
+	downloadFileFunc := awslambda.NewFunction(stack, jsii.String("download-file-func"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
-		Entry:        jsii.String("./lambdas/download-file"),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/download-file"), &awss3assets.AssetOptions{}),
 		Environment:  &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
 		FunctionName: jsii.String("moonenv-download-file"),
+		Handler:      jsii.String("main.handler"),
 	})
 
-	uploadFileFunc := awslambdago.NewGoFunction(stack, jsii.String("upload-file-func"), &awslambdago.GoFunctionProps{
+	uploadFileFunc := awslambda.NewFunction(stack, jsii.String("upload-file-func"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
-		Entry:        jsii.String("./lambdas/upload-file"),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/upload-file"), &awss3assets.AssetOptions{}),
 		Environment:  &map[string]*string{"S3Bucket": props.Bucket.BucketName()},
 		FunctionName: jsii.String("moonenv-upload-file"),
+		Handler:      jsii.String("main.handler"),
 	})
 
-	tokenAuth := awslambdago.NewGoFunction(stack, jsii.String("MoonenvAuthToken"), &awslambdago.GoFunctionProps{
+	tokenAuth := awslambda.NewFunction(stack, jsii.String("MoonenvAuthToken"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
-		Entry:        jsii.String("./lambdas/endpoints/auth/token"),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/endpoints/auth/token"), &awss3assets.AssetOptions{}),
 		FunctionName: jsii.String("moonenv-auth-token"),
 		Environment: &map[string]*string{
 			"TokenCodeTableName":       props.TokenCodeTable.TableName(),
@@ -63,60 +69,71 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 			"CognitoUrl":               props.AuthSubdomain,
 			"CallbackUri":              GetApiGatewayCallbackUri(props.RestApiSubdomain),
 		},
+		Handler: jsii.String("main.handler"),
 	})
-	callbackAuth := awslambdago.NewGoFunction(stack, jsii.Sprintf("MoonenvAuthCallback"), &awslambdago.GoFunctionProps{
+	callbackAuth := awslambda.NewFunction(stack, jsii.Sprintf("MoonenvAuthCallback"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
-		Entry:        jsii.Sprintf("./lambdas/endpoints/auth/callback"),
+		Code:         awslambda.AssetCode_FromAsset(jsii.Sprintf("./lambdas/endpoints/auth/callback"), &awss3assets.AssetOptions{}),
 		FunctionName: jsii.Sprintf("moonenv-auth-callback"),
 		Environment: &map[string]*string{
 			"StateIndexName":     props.TokenCodeStateIndexName,
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
+		Handler: jsii.String("main.handler"),
 	})
-	refreshTokenAuth := awslambdago.NewGoFunction(stack, jsii.Sprintf("MoonenvAuthRefreshToken"), &awslambdago.GoFunctionProps{
+	refreshTokenAuth := awslambda.NewFunction(stack, jsii.Sprintf("MoonenvAuthRefreshToken"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
-		Entry:        jsii.Sprintf("./lambdas/endpoints/auth/refresh"),
+		Code:         awslambda.AssetCode_FromAsset(jsii.Sprintf("./lambdas/endpoints/auth/refresh"), &awss3assets.AssetOptions{}),
 		FunctionName: jsii.Sprintf("moonenv-auth-refresh-token"),
 		Environment: &map[string]*string{
 			"CognitoUrl":         props.AuthSubdomain,
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
+		Handler: jsii.String("main.handler"),
 	})
-	revokeTokenAuth := awslambdago.NewGoFunction(stack, jsii.Sprintf("MoonenvAuthRevokeToken"), &awslambdago.GoFunctionProps{
+	revokeTokenAuth := awslambda.NewFunction(stack, jsii.Sprintf("MoonenvAuthRevokeToken"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
-		Entry:        jsii.Sprintf("./lambdas/endpoints/auth/revoke"),
+		Code:         awslambda.AssetCode_FromAsset(jsii.Sprintf("./lambdas/endpoints/auth/revoke"), &awss3assets.AssetOptions{}),
 		FunctionName: jsii.Sprintf("moonenv-auth-revoke-token"),
 		Environment: &map[string]*string{
 			"CognitoUrl":         props.AuthSubdomain,
 			"TokenCodeTableName": props.TokenCodeTable.TableName(),
 		},
+		Handler: jsii.String("main.handler"),
 	})
-	pullCommand := awslambdago.NewGoFunction(stack, jsii.String("MoonenvPullCommand"), &awslambdago.GoFunctionProps{
+	pullCommand := awslambda.NewFunction(stack, jsii.String("MoonenvPullCommand"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
-		Entry:        jsii.String("./lambdas/endpoints/orchestrator/pull"),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/endpoints/orchestrator/pull"), &awss3assets.AssetOptions{}),
 		FunctionName: jsii.String("moonenv-pull-command"),
 		Environment: &map[string]*string{
 			"AwsRegion":        props.StackProps.Env.Region,
 			"DownloadFuncName": downloadFileFunc.FunctionArn(),
 		},
+		Handler: jsii.String("main.handler"),
 	})
-	pushCommand := awslambdago.NewGoFunction(stack, jsii.String("MoonenvPushCommand"), &awslambdago.GoFunctionProps{
+	pushCommand := awslambda.NewFunction(stack, jsii.String("MoonenvPushCommand"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
-		Entry:        jsii.String("./lambdas/endpoints/orchestrator/push"),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("./lambdas/endpoints/orchestrator/push"), &awss3assets.AssetOptions{}),
 		FunctionName: jsii.String("moonenv-push-command"),
 		Environment: &map[string]*string{
 			"AwsRegion":      props.StackProps.Env.Region,
 			"UploadFuncName": uploadFileFunc.FunctionArn(),
 		},
+		Handler: jsii.String("main.handler"),
 	})
 
 	props.Bucket.GrantRead(downloadFileFunc.Role(), nil)
-	props.Bucket.GrantWrite(uploadFileFunc.Role(), nil)
+	props.Bucket.GrantWrite(uploadFileFunc.Role(), map[string]string{}, nil)
 
 	downloadFileFunc.GrantInvoke(pullCommand.Role())
 	uploadFileFunc.GrantInvoke(pushCommand.Role())
 
-	authTypes := []awslambdago.GoFunction{refreshTokenAuth, tokenAuth, callbackAuth, revokeTokenAuth}
+	authTypes := []awslambda.Function{refreshTokenAuth, tokenAuth, callbackAuth, revokeTokenAuth}
 
 	for _, auth := range authTypes {
 		props.TokenCodeTable.GrantReadWriteData(auth)

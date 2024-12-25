@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/PBH-Tech/moonenv/stacks"
-	"github.com/aws/aws-cdk-go/awscdk"
-	"github.com/aws/aws-cdk-go/awscdk/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/jsii-runtime-go"
 	"github.com/joho/godotenv"
 )
