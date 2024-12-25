@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	tokenCode "github.com/PBH-Tech/moonenv/lambdas/endpoints/auth"
+	oauth "github.com/PBH-Tech/moonenv/lambdas/util/oauth"
 	restApi "github.com/PBH-Tech/moonenv/lambdas/util/rest-api"
 )
 
@@ -23,7 +24,7 @@ type APIResponse struct {
 	TokenType   string `json:"tokenType"`
 }
 
-func RefreshToken(deviceCode string, refreshToken string) (restApi.Response, error) {
+func RefreshToken(deviceCode string, refreshToken string) restApi.Response {
 
 	token, err := tokenCode.GetToken(deviceCode)
 
@@ -34,12 +35,12 @@ func RefreshToken(deviceCode string, refreshToken string) (restApi.Response, err
 	return getToken(token.ClientId, refreshToken)
 }
 
-func getToken(clientId string, refreshToken string) (restApi.Response, error) {
+func getToken(clientId string, refreshToken string) restApi.Response {
 	data := url.Values{}
-	oauthUrl, err := url.ParseRequestURI(CognitoUrl)
+	oauthUrl, errResponse := oauth.GetOAuthUrl()
 
-	if err != nil {
-		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Error while parsing cognito url")
+	if errResponse != nil {
+		return *errResponse
 	}
 
 	data.Set("client_id", clientId)

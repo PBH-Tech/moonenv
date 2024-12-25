@@ -19,7 +19,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(ctx context.Context, event *bucketService.UploadFileData) (restApi.Response, error) {
+func handler(ctx context.Context, event *bucketService.UploadFileData) restApi.Response {
 	cfg, err := config.LoadDefaultConfig(ctx)
 
 	if err != nil {

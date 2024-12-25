@@ -50,7 +50,7 @@ func GetObjectFromS3Bucket(ctx context.Context, s3Client *s3.Client, key string)
 	return base64.StdEncoding.EncodeToString(body), nil
 }
 
-func UploadToS3Bucket(ctx context.Context, fileData UploadFileData, s3Client *s3.Client) (restApi.Response, error) {
+func UploadToS3Bucket(ctx context.Context, fileData UploadFileData, s3Client *s3.Client) restApi.Response {
 	content, decErr := base64.StdEncoding.DecodeString(fileData.B64Str)
 
 	if decErr != nil {

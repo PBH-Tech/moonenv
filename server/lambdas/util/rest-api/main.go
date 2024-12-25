@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-func ApiResponse(statusCode int, body interface{}) (Response, error) {
+func ApiResponse(statusCode int, body interface{}) Response {
 	var (
 		buf      bytes.Buffer
 		respBody []byte
@@ -23,14 +23,14 @@ func ApiResponse(statusCode int, body interface{}) (Response, error) {
 		resp.Body = string(respBody)
 	}
 
-	return resp, nil
+	return resp
 }
 
-func UnhandledMethod() (Response, error) {
+func UnhandledMethod() Response {
 	return ApiResponse(http.StatusMethodNotAllowed, "Method not allowed")
 }
 
-func BuildErrorResponse(statusCode int, message string) (Response, error) {
+func BuildErrorResponse(statusCode int, message string) Response {
 	return ApiResponse(statusCode, map[string]string{"message": message})
 }
 

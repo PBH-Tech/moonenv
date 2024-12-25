@@ -17,7 +17,7 @@ type PushCommandRequest struct {
 	B64Str string `json:"b64String"`
 }
 
-func PushCommand(req restApi.Request) (restApi.Response, error) {
+func PushCommand(req restApi.Request) restApi.Response {
 	pathData := req.PathParameters
 	queryDate := req.QueryStringParameters
 	if orchestrator.GetHeader(req.Headers, "content-type") != "application/json" {

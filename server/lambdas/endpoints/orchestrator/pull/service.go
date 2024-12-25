@@ -13,7 +13,7 @@ import (
 	lambdaSdk "github.com/aws/aws-sdk-go/service/lambda"
 )
 
-func PullCommand(req restApi.Request) (restApi.Response, error) {
+func PullCommand(req restApi.Request) restApi.Response {
 	pathData := req.PathParameters
 	queryDate := req.QueryStringParameters
 	pathRequest := bucketService.DownloadFileData{Key: fmt.Sprintf("%s/%s/%s", pathData["org"], pathData["repo"], queryDate["env"])}

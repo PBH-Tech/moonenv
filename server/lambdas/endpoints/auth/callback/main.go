@@ -18,7 +18,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(_ctx context.Context, req restApi.Request) (restApi.Response, error) {
+func handler(_ctx context.Context, req restApi.Request) restApi.Response {
 	var (
 		code, codeOk   = req.QueryStringParameters["code"]
 		state, stateOk = req.QueryStringParameters["state"]

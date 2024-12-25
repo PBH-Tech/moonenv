@@ -18,7 +18,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(_ctx context.Context, req restApi.Request) (restApi.Response, error) {
+func handler(_ctx context.Context, req restApi.Request) restApi.Response {
 	var (
 		deviceCode, deviceCodeOk = req.QueryStringParameters["device_code"]
 		token, tokenOk           = req.Headers["authorization"]

@@ -5,10 +5,11 @@ import (
 	"net/url"
 
 	tokenCode "github.com/PBH-Tech/moonenv/lambdas/endpoints/auth"
+	oauth "github.com/PBH-Tech/moonenv/lambdas/util/oauth"
 	restApi "github.com/PBH-Tech/moonenv/lambdas/util/rest-api"
 )
 
-func RevokeToken(deviceCode string, refreshToken string) (restApi.Response, error) {
+func RevokeToken(deviceCode string, refreshToken string) restApi.Response {
 	token, err := tokenCode.GetToken(deviceCode)
 
 	if err != nil {
@@ -18,13 +19,13 @@ func RevokeToken(deviceCode string, refreshToken string) (restApi.Response, erro
 	return invalidateToken(token.ClientId, refreshToken)
 }
 
-func invalidateToken(clientId string, refreshToken string) (restApi.Response, error) {
+func invalidateToken(clientId string, refreshToken string) restApi.Response {
 	// TODO: I don't like this code that are very similar to refresh too, should we abstract it?
 	data := url.Values{}
-	oauthUrl, err := url.ParseRequestURI(CognitoUrl)
+	oauthUrl, errResponse := oauth.GetOAuthUrl()
 
-	if err != nil {
-		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Error while parsing cognito url")
+	if errResponse != nil {
+		return *errResponse
 	}
 
 	data.Set("client_id", clientId)

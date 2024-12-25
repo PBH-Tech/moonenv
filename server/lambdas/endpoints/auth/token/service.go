@@ -12,6 +12,7 @@ import (
 	"time"
 
 	tokenCode "github.com/PBH-Tech/moonenv/lambdas/endpoints/auth"
+	"github.com/PBH-Tech/moonenv/lambdas/util/oauth"
 	restApi "github.com/PBH-Tech/moonenv/lambdas/util/rest-api"
 	"github.com/google/uuid"
 )
@@ -37,7 +38,7 @@ type APIResponse struct {
 	TokenType    string `json:"tokenType"`
 }
 
-func RequestSetOfToken(clientId string) (restApi.Response, error) {
+func RequestSetOfToken(clientId string) restApi.Response {
 	var (
 		stateCode  = uuid.New().String()
 		deviceCode = uuid.New().String()
@@ -74,17 +75,17 @@ func RequestSetOfToken(clientId string) (restApi.Response, error) {
 	})
 }
 
-func RequestJWTs(deviceCode string, clientId string) (restApi.Response, error) {
+func RequestJWTs(deviceCode string, clientId string) restApi.Response {
 	token, err := tokenCode.GetToken(deviceCode)
 
 	if token == nil || err != nil {
 		return restApi.BuildErrorResponse(http.StatusNotFound, "Device code was not found")
 	}
 
-	response, err := validateTokenCode(*token, clientId)
+	response := validateTokenCode(*token, clientId)
 
-	if response != nil || err != nil {
-		return *response, err
+	if response != nil {
+		return *response
 	}
 
 	err = tokenCode.UpdateToken(token.DeviceCode, tokenCode.TokenCode{LastCheckedAt: strconv.FormatInt(time.Now().Unix(), 10)})
@@ -113,12 +114,13 @@ func RequestJWTs(deviceCode string, clientId string) (restApi.Response, error) {
 	}
 }
 
-func getToken(token tokenCode.TokenCode) (restApi.Response, error) {
+func getToken(token tokenCode.TokenCode) restApi.Response {
 	data := url.Values{}
-	oauthUrl, err := url.ParseRequestURI(CognitoUrl)
+	println()
+	oauthUrl, errResponse := oauth.GetOAuthUrl()
 
-	if err != nil {
-		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Error while parsing cognito url")
+	if errResponse != nil {
+		return *errResponse
 	}
 
 	data.Set("redirect_uri", CallbackUri)
@@ -170,13 +172,13 @@ func generateCodeVerifierAndChallenge() CodeChallenge {
 }
 
 // TODO: find a different way to validate it
-func validateTokenCode(token tokenCode.TokenCode, clientId string) (*restApi.Response, error) {
+func validateTokenCode(token tokenCode.TokenCode, clientId string) *restApi.Response {
 	expiresAt, err := strconv.ParseInt(token.ExpireAt, 10, 64)
 
 	if err != nil {
-		response, err := restApi.BuildErrorResponse(http.StatusInternalServerError, "Impossible to convert expires at")
+		response := restApi.BuildErrorResponse(http.StatusInternalServerError, "Impossible to convert expires at")
 
-		return &response, err
+		return &response
 	}
 
 	var (
@@ -185,31 +187,31 @@ func validateTokenCode(token tokenCode.TokenCode, clientId string) (*restApi.Res
 	)
 
 	if isStatusExpired || isExpired {
-		response, err := restApi.BuildErrorResponse(http.StatusGone, "Token is expired")
+		response := restApi.BuildErrorResponse(http.StatusGone, "Token is expired")
 
 		if err == nil && !isStatusExpired {
 			err = tokenCode.UpdateToken(token.DeviceCode, tokenCode.TokenCode{Status: "expired"})
 
 			if err != nil {
-				response, err = restApi.BuildErrorResponse(http.StatusInternalServerError, "Failed to update token")
+				response = restApi.BuildErrorResponse(http.StatusInternalServerError, "Failed to update token")
 			}
 		}
 
-		return &response, err
+		return &response
 	}
 
 	if token.ClientId != clientId {
-		response, err := restApi.BuildErrorResponse(http.StatusForbidden, "The client ID does not match")
+		response := restApi.BuildErrorResponse(http.StatusForbidden, "The client ID does not match")
 
-		return &response, err
+		return &response
 	}
 
 	lastCheckedAt, err := strconv.ParseInt(token.LastCheckedAt, 10, 64)
 
 	if err != nil {
-		response, err := restApi.BuildErrorResponse(http.StatusInternalServerError, "Impossible to convert last checked at")
+		response := restApi.BuildErrorResponse(http.StatusInternalServerError, "Impossible to convert last checked at")
 
-		return &response, err
+		return &response
 	}
 
 	if time.Now().Unix() <= lastCheckedAt+PollingIntervalInSeconds {
@@ -218,15 +220,15 @@ func validateTokenCode(token tokenCode.TokenCode, clientId string) (*restApi.Res
 		err = tokenCode.UpdateToken(token.DeviceCode, tokenCode.TokenCode{LastCheckedAt: strconv.FormatInt(time.Now().Unix(), 10)})
 
 		if err != nil {
-			response, err = restApi.BuildErrorResponse(http.StatusInternalServerError, "Failed to update token")
+			response = restApi.BuildErrorResponse(http.StatusInternalServerError, "Failed to update token")
 
-			return &response, err
+			return &response
 		}
 
-		response, err = restApi.BuildErrorResponse(http.StatusTooManyRequests, fmt.Sprintf("Respect the pooling interval of %d second(s)", PollingIntervalInSeconds))
+		response = restApi.BuildErrorResponse(http.StatusTooManyRequests, fmt.Sprintf("Respect the pooling interval of %d second(s)", PollingIntervalInSeconds))
 
-		return &response, err
+		return &response
 	}
 
-	return nil, nil
+	return nil
 }

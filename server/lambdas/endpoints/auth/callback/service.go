@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-func SaveCode(state string, code string) (restApi.Response, error) {
+func SaveCode(state string, code string) restApi.Response {
 	tokens, err := tokenCode.QueryToken(StateIndexName, map[string]*dynamodb.Condition{
 		"state": {
 			ComparisonOperator: aws.String("EQ"),
