@@ -32,7 +32,7 @@ func PushCommand(req restApi.Request) restApi.Response {
 		return restApi.ApiResponse(http.StatusBadRequest, "Invalid body request")
 	}
 
-	request := bucketService.UploadFileData{B64Str: commandData.B64Str, ObjName: fmt.Sprintf("%s/%s/%s", pathData["org"], pathData["repo"], queryDate["env"])}
+	request := bucketService.UploadFileData{B64Str: commandData.B64Str, ObjName: fmt.Sprintf("%s/%s/%s", pathData["orgId"], pathData["repoId"], queryDate["env"])}
 	client := orchestrator.GetLambdaClient()
 	payload, err := json.Marshal(request)
 

@@ -117,7 +117,7 @@ func NewCdkLambdaStack(scope constructs.Construct, id string, props *CdkLambdaSt
 	})
 
 	props.Bucket.GrantRead(downloadFileFunc.Role(), nil)
-	props.Bucket.GrantWrite(uploadFileFunc.Role(), map[string]string{}, nil)
+	props.Bucket.GrantWrite(uploadFileFunc.Role(), "*", nil)
 
 	downloadFileFunc.GrantInvoke(pullCommand.Role())
 	uploadFileFunc.GrantInvoke(pushCommand.Role())

@@ -16,7 +16,7 @@ import (
 func PullCommand(req restApi.Request) restApi.Response {
 	pathData := req.PathParameters
 	queryDate := req.QueryStringParameters
-	pathRequest := bucketService.DownloadFileData{Key: fmt.Sprintf("%s/%s/%s", pathData["org"], pathData["repo"], queryDate["env"])}
+	pathRequest := bucketService.DownloadFileData{Key: fmt.Sprintf("%s/%s/%s", pathData["orgId"], pathData["repoId"], queryDate["env"])}
 	client := orchestrator.GetLambdaClient()
 	payload, err := json.Marshal(pathRequest)
 
