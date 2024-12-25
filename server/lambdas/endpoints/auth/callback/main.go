@@ -18,15 +18,15 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(_ctx context.Context, req restApi.Request) restApi.Response {
+func handler(_ctx context.Context, req restApi.Request) (restApi.Response, error) {
 	var (
 		code, codeOk   = req.QueryStringParameters["code"]
 		state, stateOk = req.QueryStringParameters["state"]
 	)
 
 	if !codeOk || !stateOk {
-		return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "code and state query parameters are required"})
+		return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "code and state query parameters are required"}), nil
 	}
 
-	return SaveCode(state, code)
+	return SaveCode(state, code), nil
 }

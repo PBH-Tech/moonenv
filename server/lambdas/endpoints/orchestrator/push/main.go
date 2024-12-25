@@ -11,6 +11,6 @@ func main() {
 	lambda.Start(handler)
 }
 
-func handler(_ctx context.Context, req restApi.Request) restApi.Response {
-	return PushCommand(req)
+func handler(_ctx context.Context, req restApi.Request) (restApi.Response, error) {
+	return PushCommand(req), nil
 }
