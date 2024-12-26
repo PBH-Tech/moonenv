@@ -66,13 +66,40 @@ func createOrgResource(stack awscdk.Stack, api awsapigateway.RestApi, props *Cdk
 	orgIdResource := orgResource.AddResource(jsii.String("{orgId}"), &awsapigateway.ResourceOptions{})
 	repoResource := orgIdResource.AddResource(jsii.String("repos"), &awsapigateway.ResourceOptions{})
 	repoIdResource := repoResource.AddResource(jsii.String("{repoId}"), &awsapigateway.ResourceOptions{})
+	pushModel := awsapigateway.NewModel(stack, jsii.String("PushModel"), &awsapigateway.ModelProps{
+		RestApi:     api,
+		ContentType: jsii.String("application/json"),
+		ModelName:   jsii.String("PushCommand"),
+		Schema: &awsapigateway.JsonSchema{
+			Type:     awsapigateway.JsonSchemaType_OBJECT,
+			Required: &[]*string{jsii.String("b64String")},
+			Properties: &map[string]*awsapigateway.JsonSchema{
+				"b64String": {
+					Type: awsapigateway.JsonSchemaType_STRING,
+				},
+			},
+		},
+	})
 
 	repoIdResource.AddMethod(jsii.String(*jsii.String("GET")),
 		awsapigateway.NewLambdaIntegration(lambdas.pullCommand, &awsapigateway.LambdaIntegrationOptions{}),
-		&awsapigateway.MethodOptions{Authorizer: authorizer})
+		&awsapigateway.MethodOptions{Authorizer: authorizer, RequestValidatorOptions: &awsapigateway.RequestValidatorOptions{
+			ValidateRequestParameters: jsii.Bool(true),
+			RequestValidatorName:      jsii.String("pull-command-param-validator"),
+		}})
 	repoIdResource.AddMethod(jsii.String(*jsii.String("POST")),
 		awsapigateway.NewLambdaIntegration(lambdas.pushCommand, &awsapigateway.LambdaIntegrationOptions{}),
-		&awsapigateway.MethodOptions{Authorizer: authorizer})
+		&awsapigateway.MethodOptions{
+			Authorizer: authorizer,
+			RequestValidatorOptions: &awsapigateway.RequestValidatorOptions{
+				ValidateRequestParameters: jsii.Bool(true),
+				RequestValidatorName:      jsii.String("push-command-param-validator"),
+				ValidateRequestBody:       jsii.Bool(true),
+			},
+			RequestModels: &map[string]awsapigateway.IModel{
+				"application/json": pushModel,
+			},
+		})
 
 }
 
