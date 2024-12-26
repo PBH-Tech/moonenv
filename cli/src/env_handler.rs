@@ -1,5 +1,5 @@
 use crate::cli_struct::RepoActionEnvArgs;
-use crate::config_handler::{get_default_org, get_default_url};
+use crate::config_handler::{get_org, get_url};
 use anyhow::{anyhow, Context, Result};
 use base64::prelude::*;
 use reqwest::{header::CONTENT_TYPE, Client, Response, StatusCode};
@@ -17,13 +17,6 @@ pub struct PushResponse {
 #[derive(Deserialize, Debug)]
 pub struct PullResponse {
     pub file: String,
-}
-
-fn get_org(value: RepoActionEnvArgs) -> Result<String> {
-    value
-        .org
-        .or(Some(get_default_org()?))
-        .ok_or_else(|| anyhow::anyhow!("Org parameter is missing"))
 }
 
 fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
@@ -50,8 +43,9 @@ async fn treat_api_err<T: DeserializeOwned>(response: Response) -> Result<T> {
 }
 
 fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
-    let org = get_org(value.clone())?;
-    let url = get_default_url()?;
+    // If no org, the default one is used
+    let org = get_org(value.org)?;
+    let url = get_url(Some(org.clone()))?;
 
     Ok(format!(
         "{}/orgs/{}/repos/{}?env={}",

@@ -32,6 +32,7 @@ pub enum Environment {
 impl fmt::Display for Environment {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            // TODO: change it to be dynamic; The client can set any environment
             Environment::Dev => write!(f, "Dev"),
             Environment::Qa => write!(f, "Qa"),
             Environment::Prod => write!(f, "Prod"),
