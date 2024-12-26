@@ -20,16 +20,13 @@ type PushCommandRequest struct {
 func PushCommand(req restApi.Request) restApi.Response {
 	pathData := req.PathParameters
 	queryDate := req.QueryStringParameters
-	if orchestrator.GetHeader(req.Headers, "content-type") != "application/json" {
-		return restApi.ApiResponse(http.StatusBadRequest, "Invalid request type")
-	}
 
 	var commandData PushCommandRequest
 
 	err := json.Unmarshal([]byte(req.Body), &commandData)
 
 	if err != nil {
-		return restApi.ApiResponse(http.StatusBadRequest, "Invalid body request")
+		return restApi.BuildErrorResponse(http.StatusBadRequest, "Invalid body request")
 	}
 
 	request := bucketService.UploadFileData{B64Str: commandData.B64Str, ObjName: fmt.Sprintf("%s/%s/%s", pathData["orgId"], pathData["repoId"], queryDate["env"])}
@@ -37,13 +34,13 @@ func PushCommand(req restApi.Request) restApi.Response {
 	payload, err := json.Marshal(request)
 
 	if err != nil {
-		return restApi.ApiResponse(http.StatusInternalServerError, "Failed while preparing the payload")
+		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Failed while preparing the payload")
 	}
 
 	result, err := client.Invoke(&lambdaSdk.InvokeInput{FunctionName: aws.String(os.Getenv("UploadFuncName")), Payload: payload})
 
 	if err != nil {
-		return restApi.ApiResponse(http.StatusInternalServerError, "Failed invoking function")
+		return restApi.BuildErrorResponse(http.StatusInternalServerError, "Failed invoking function")
 	}
 
 	return restApi.ApiResponse(int(*result.StatusCode), map[string]string{"message": "File uploaded"})

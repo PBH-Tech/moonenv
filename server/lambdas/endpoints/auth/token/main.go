@@ -35,16 +35,12 @@ func main() {
 
 func handler(_ctx context.Context, req restApi.Request) (restApi.Response, error) {
 	var (
-		clientId, clientIdOk     = req.QueryStringParameters["client_id"]
+		clientId                 = req.QueryStringParameters["client_id"]
 		deviceCode, deviceCodeOk = req.QueryStringParameters["device_code"]
 		grantType, grantTypeOk   = req.QueryStringParameters["grant_type"]
 		// Read more about it: https://oauth.net/2/grant-types/device-code/
 		deviceCodeGrantType = "urn:ietf:params:oauth:grant-type:device_code"
 	)
-
-	if !clientIdOk {
-		return restApi.ApiResponse(http.StatusBadRequest, map[string]string{"message": "client_id query parameter is required"}), nil
-	}
 
 	/// TODO:improve it
 	if !deviceCodeOk {
