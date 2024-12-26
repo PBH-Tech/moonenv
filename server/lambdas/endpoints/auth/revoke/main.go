@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"strings"
 
@@ -21,17 +20,9 @@ func main() {
 
 func handler(_ctx context.Context, req restApi.Request) (restApi.Response, error) {
 	var (
-		deviceCode, deviceCodeOk = req.QueryStringParameters["device_code"]
-		token, tokenOk           = req.Headers["Authorization"]
+		deviceCode = req.QueryStringParameters["device_code"]
+		token      = req.Headers["Authorization"]
 	)
-
-	if !tokenOk {
-		return restApi.BuildErrorResponse(http.StatusUnauthorized, "token is missing"), nil
-	}
-
-	if !deviceCodeOk {
-		return restApi.BuildErrorResponse(http.StatusBadRequest, "device code parameter is required"), nil
-	}
 
 	return RevokeToken(deviceCode, strings.Replace(token, "Bearer ", "", 1)), nil
 }

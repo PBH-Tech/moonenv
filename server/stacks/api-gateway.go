@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"github.com/PBH-Tech/moonenv/schema"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscognito"
@@ -70,22 +71,14 @@ func createOrgResource(stack awscdk.Stack, api awsapigateway.RestApi, props *Cdk
 		RestApi:     api,
 		ContentType: jsii.String("application/json"),
 		ModelName:   jsii.String("PushCommand"),
-		Schema: &awsapigateway.JsonSchema{
-			Type:     awsapigateway.JsonSchemaType_OBJECT,
-			Required: &[]*string{jsii.String("b64String")},
-			Properties: &map[string]*awsapigateway.JsonSchema{
-				"b64String": {
-					Type: awsapigateway.JsonSchemaType_STRING,
-				},
-			},
-		},
+		Schema:      &schema.PushCommandRequestSchema,
 	})
 
 	repoIdResource.AddMethod(jsii.String(*jsii.String("GET")),
 		awsapigateway.NewLambdaIntegration(lambdas.pullCommand, &awsapigateway.LambdaIntegrationOptions{}),
 		&awsapigateway.MethodOptions{Authorizer: authorizer, RequestValidatorOptions: &awsapigateway.RequestValidatorOptions{
 			ValidateRequestParameters: jsii.Bool(true),
-			RequestValidatorName:      jsii.String("pull-command-param-validator"),
+			RequestValidatorName:      jsii.String("pull-command-validator"),
 		}})
 	repoIdResource.AddMethod(jsii.String(*jsii.String("POST")),
 		awsapigateway.NewLambdaIntegration(lambdas.pushCommand, &awsapigateway.LambdaIntegrationOptions{}),
@@ -93,7 +86,7 @@ func createOrgResource(stack awscdk.Stack, api awsapigateway.RestApi, props *Cdk
 			Authorizer: authorizer,
 			RequestValidatorOptions: &awsapigateway.RequestValidatorOptions{
 				ValidateRequestParameters: jsii.Bool(true),
-				RequestValidatorName:      jsii.String("push-command-param-validator"),
+				RequestValidatorName:      jsii.String("push-command-validator"),
 				ValidateRequestBody:       jsii.Bool(true),
 			},
 			RequestModels: &map[string]awsapigateway.IModel{
@@ -111,19 +104,56 @@ func createAuthResource(api awsapigateway.RestApi, props *CdkApiGatewayProps) {
 	authResource.AddResource(jsii.String("token"), &awsapigateway.ResourceOptions{}).
 		AddMethod(jsii.String(*jsii.String("GET")),
 			awsapigateway.NewLambdaIntegration(lambdas.tokenAuth, &awsapigateway.LambdaIntegrationOptions{}),
-			&awsapigateway.MethodOptions{})
+			&awsapigateway.MethodOptions{
+				RequestParameters: &map[string]*bool{
+					"method.request.querystring.client_id": jsii.Bool(true),
+				},
+				RequestValidatorOptions: &awsapigateway.RequestValidatorOptions{
+					RequestValidatorName:      jsii.String("auth-token-validator"),
+					ValidateRequestParameters: jsii.Bool(true),
+				},
+			})
 
 	authResource.AddResource(jsii.String("callback"), &awsapigateway.ResourceOptions{}).
 		AddMethod(jsii.String("GET"),
-			awsapigateway.NewLambdaIntegration(lambdas.callbackAuth, &awsapigateway.LambdaIntegrationOptions{}), &awsapigateway.MethodOptions{})
+			awsapigateway.NewLambdaIntegration(lambdas.callbackAuth, &awsapigateway.LambdaIntegrationOptions{}), &awsapigateway.MethodOptions{
+				RequestParameters: &map[string]*bool{
+					"method.request.querystring.code":  jsii.Bool(true),
+					"method.request.querystring.state": jsii.Bool(true),
+				},
+				RequestValidatorOptions: &awsapigateway.RequestValidatorOptions{
+					RequestValidatorName:      jsii.String("auth-callback-validator"),
+					ValidateRequestParameters: jsii.Bool(true),
+				},
+			})
 
 	authResource.AddResource(jsii.String("refresh-token"), &awsapigateway.ResourceOptions{}).
 		AddMethod(jsii.String("POST"),
-			awsapigateway.NewLambdaIntegration(lambdas.refreshTokenAuth, &awsapigateway.LambdaIntegrationOptions{}), &awsapigateway.MethodOptions{})
+			awsapigateway.NewLambdaIntegration(lambdas.refreshTokenAuth, &awsapigateway.LambdaIntegrationOptions{}), &awsapigateway.MethodOptions{
+				RequestParameters: &map[string]*bool{
+					"method.request.querystring.device_code": jsii.Bool(true),
+					"method.request.header.Authorization":    jsii.Bool(true),
+				},
+				RequestValidatorOptions: &awsapigateway.RequestValidatorOptions{
+					ValidateRequestBody:       jsii.Bool(true),
+					ValidateRequestParameters: jsii.Bool(true),
+					RequestValidatorName:      jsii.String("auth-refresh-token-validator"),
+				},
+			})
 
 	authResource.AddResource(jsii.String("revoke"), &awsapigateway.ResourceOptions{}).
 		AddMethod(jsii.String("POST"),
-			awsapigateway.NewLambdaIntegration(lambdas.revokeTokenAuth, &awsapigateway.LambdaIntegrationOptions{}), &awsapigateway.MethodOptions{})
+			awsapigateway.NewLambdaIntegration(lambdas.revokeTokenAuth, &awsapigateway.LambdaIntegrationOptions{}), &awsapigateway.MethodOptions{
+				RequestParameters: &map[string]*bool{
+					"method.request.querystring.device_code": jsii.Bool(true),
+					"method.request.header.Authorization":    jsii.Bool(true),
+				},
+				RequestValidatorOptions: &awsapigateway.RequestValidatorOptions{
+					ValidateRequestBody:       jsii.Bool(true),
+					ValidateRequestParameters: jsii.Bool(true),
+					RequestValidatorName:      jsii.String("auth-revoke-token-validator"),
+				},
+			})
 
 	props.CognitoStack.SetCallbackUrLs(&[]*string{callbackUri})
 
