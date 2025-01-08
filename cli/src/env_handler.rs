@@ -6,6 +6,7 @@ use reqwest::{header::CONTENT_TYPE, Client, Response, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde_json::json;
+use std::borrow::Borrow;
 use std::fs::File;
 use std::io::Write;
 
@@ -45,7 +46,7 @@ async fn treat_api_err<T: DeserializeOwned>(response: Response) -> Result<T> {
 fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
     // If no org, the default one is used
     let org = get_org(value.org)?;
-    let url = get_url(Some(org.clone()))?;
+    let url = get_url(org.borrow())?;
 
     Ok(format!(
         "{}/orgs/{}/repos/{}?env={}",
