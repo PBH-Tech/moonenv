@@ -1,9 +1,9 @@
+use crate::api_util::treat_api_err;
 use crate::cli_struct::RepoActionEnvArgs;
 use crate::config_handler::{get_org, get_url};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use base64::prelude::*;
-use reqwest::{header::CONTENT_TYPE, Client, Response, StatusCode};
-use serde::de::DeserializeOwned;
+use reqwest::{header::CONTENT_TYPE, Client};
 use serde::Deserialize;
 use serde_json::json;
 use std::borrow::Borrow;
@@ -26,21 +26,6 @@ fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
         .to_str()
         .ok_or_else(|| anyhow::anyhow!("Invalid env path"))
         .and_then(|path| Ok(path.to_owned()))
-}
-
-async fn treat_api_err<T: DeserializeOwned>(response: Response) -> Result<T> {
-    if let Err(err) = response.error_for_status_ref() {
-        let status = err.status();
-        let text = response.text().await?;
-
-        return Err(anyhow!(
-            "Request failed with status {}: {}",
-            status.unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
-            text
-        ));
-    }
-
-    Ok(response.json::<T>().await?)
 }
 
 fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {

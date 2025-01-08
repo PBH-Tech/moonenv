@@ -5,6 +5,7 @@ use cli_struct::{App, Command, ConfigVariableOptions};
 use config_handler::{change_config, set_config_name_as_default, IndividualConfig};
 use env_handler::{pull_handler, push_handler};
 
+mod api_util;
 mod auth_handler;
 mod cli_struct;
 mod config_handler;

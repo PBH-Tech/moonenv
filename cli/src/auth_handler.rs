@@ -6,10 +6,11 @@ use std::{
 };
 
 use anyhow::{anyhow, Ok, Result};
-use reqwest::{Client, Response, StatusCode};
-use serde::{de::DeserializeOwned, Deserialize};
+use reqwest::{Client, StatusCode};
+use serde::Deserialize;
 
 use crate::{
+    api_util::treat_api_err,
     cli_struct::OrgActionAuthArgs,
     config_handler::{self, get_client_id, get_org, get_url},
 };
@@ -30,22 +31,6 @@ struct OAuthTokenResult {
 
     #[serde(alias = "refreshToken")]
     refresh_token: String,
-}
-
-// TODO: move it to another file (duplicated)
-async fn treat_api_err<T: DeserializeOwned>(response: Response) -> Result<T> {
-    if let Err(err) = response.error_for_status_ref() {
-        let status = err.status();
-        let text = response.text().await?;
-
-        return Err(anyhow!(
-            "Request failed with status {}: {}",
-            status.unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
-            text
-        ));
-    }
-
-    Ok(response.json::<T>().await?)
 }
 
 #[tokio::main]
