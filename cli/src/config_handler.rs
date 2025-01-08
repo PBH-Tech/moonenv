@@ -2,7 +2,7 @@ use anyhow::{anyhow, Ok, Result};
 use confy::{self};
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
-use std::{borrow::Borrow, path::PathBuf};
+use std::{borrow::Borrow, path::PathBuf, time::Duration};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MoonenvConfig {
@@ -21,6 +21,8 @@ pub struct IndividualConfig {
 
     pub access_token: Option<String>,
 
+    pub access_token_expires_at: Option<Duration>,
+
     pub refresh_token: Option<String>,
 
     pub client_id: Option<String>,
@@ -32,6 +34,7 @@ impl Default for IndividualConfig {
             org: "moonenv".to_string(),
             url: Some("www.moonenv.app".to_string()),
             access_token: None,
+            access_token_expires_at: None,
             device_code: None,
             refresh_token: None,
             client_id: None,

@@ -2,17 +2,17 @@ use std::{
     borrow::Borrow,
     sync::Arc,
     thread::{sleep, spawn},
-    time::Duration,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::{anyhow, Ok, Result};
+use anyhow::{anyhow, Error, Ok, Result};
 use reqwest::{Client, StatusCode};
 use serde::Deserialize;
 
 use crate::{
     api_util::treat_api_err,
     cli_struct::OrgActionAuthArgs,
-    config_handler::{self, get_client_id, get_org, get_url},
+    config_handler::{self, get_client_id, get_config, get_org, get_url},
 };
 
 #[derive(Deserialize, Debug)]
@@ -31,6 +31,18 @@ struct OAuthTokenResult {
 
     #[serde(alias = "refreshToken")]
     refresh_token: String,
+
+    #[serde(alias = "expiresIn")]
+    expires_in: u16,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+struct OAuthRefreshTokenResult {
+    #[serde(alias = "idToken")]
+    id_token: String,
+
+    #[serde(alias = "expiresIn")]
+    expires_in: u16,
 }
 
 #[tokio::main]
@@ -53,6 +65,7 @@ pub async fn login_handler(value: OrgActionAuthArgs) -> Result<()> {
     config.access_token = Some(login_result.id_token); // TODO: weird, but access token is ID Token
     config.device_code = Some(set_of_token_result.device_code.clone());
     config.refresh_token = Some(login_result.refresh_token);
+    config.access_token_expires_at = Some(get_expires_at(login_result.expires_in)?);
 
     let _ = config_handler::change_config(config);
 
@@ -87,4 +100,51 @@ async fn fetch_login_result(
     }
 
     Ok(token_result)
+}
+
+pub async fn get_access_token(org: &String) -> Result<String> {
+    let config = get_config(org)?;
+    let mut access_token = config.access_token;
+
+    if access_token == None {
+        access_token = Some(refresh_token(org).await?);
+    }
+
+    Ok(access_token.ok_or(anyhow::anyhow!("Access token is not defined"))?)
+}
+
+fn get_expires_at(expires_in: u16) -> Result<Duration> {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+
+    Ok(now + Duration::from_secs(expires_in.into()))
+}
+
+async fn refresh_token(org: &String) -> Result<String> {
+    let mut config = get_config(org)?;
+    let refresh_token = config.refresh_token.clone().ok_or(anyhow::anyhow!(
+        "No refresh token found. Try to login first"
+    ))?;
+    let device_code = config
+        .device_code
+        .clone()
+        .ok_or(anyhow::anyhow!("No device code found. Try to login first."))?;
+    let url = get_url(org)?;
+    let uri = format!("{}/auth/refresh-token?device_code={}", url, device_code);
+    let result = treat_api_err::<OAuthRefreshTokenResult>(
+        Client::new()
+            .post(uri)
+            .bearer_auth(refresh_token)
+            .send()
+            .await?,
+    )
+    .await?;
+
+    config.access_token = Some(result.id_token.clone());
+    config.access_token_expires_at = Some(get_expires_at(result.expires_in)?);
+
+    let _ = config_handler::change_config(config);
+
+    Ok(result.id_token)
 }

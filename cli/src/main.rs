@@ -23,6 +23,7 @@ fn main() -> Result<()> {
                 org: value.org,
                 url: value.url,
                 access_token: None,
+                access_token_expires_at: None,
                 device_code: None,
                 refresh_token: None,
                 client_id: value.client_id,
