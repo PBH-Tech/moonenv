@@ -5,7 +5,7 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::{anyhow, Error, Ok, Result};
+use anyhow::{anyhow, Ok, Result};
 use reqwest::{Client, StatusCode};
 use serde::Deserialize;
 
@@ -105,8 +105,10 @@ async fn fetch_login_result(
 pub async fn get_access_token(org: &String) -> Result<String> {
     let config = get_config(org)?;
     let mut access_token = config.access_token;
+    let now = get_duration_since_unix_epoch();
+    let expires_at = config.access_token_expires_at.unwrap_or(now);
 
-    if access_token == None {
+    if access_token == None || expires_at < now {
         access_token = Some(refresh_token(org).await?);
     }
 
@@ -114,11 +116,15 @@ pub async fn get_access_token(org: &String) -> Result<String> {
 }
 
 fn get_expires_at(expires_in: u16) -> Result<Duration> {
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
+    let now = get_duration_since_unix_epoch();
 
     Ok(now + Duration::from_secs(expires_in.into()))
+}
+
+fn get_duration_since_unix_epoch() -> Duration {
+    return SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
 }
 
 async fn refresh_token(org: &String) -> Result<String> {
