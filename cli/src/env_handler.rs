@@ -1,11 +1,13 @@
+use crate::api_util::treat_api_err;
+use crate::auth_handler::get_access_token;
 use crate::cli_struct::RepoActionEnvArgs;
-use crate::config_handler::{get_default_org, get_default_url};
-use anyhow::{anyhow, Context, Result};
+use crate::config_handler::{get_org, get_url};
+use anyhow::{Context, Result};
 use base64::prelude::*;
-use reqwest::{header::CONTENT_TYPE, Client, Response, StatusCode};
-use serde::de::DeserializeOwned;
+use reqwest::{header::CONTENT_TYPE, Client};
 use serde::Deserialize;
 use serde_json::json;
+use std::borrow::Borrow;
 use std::fs::File;
 use std::io::Write;
 
@@ -19,13 +21,6 @@ pub struct PullResponse {
     pub file: String,
 }
 
-fn get_org(value: RepoActionEnvArgs) -> Result<String> {
-    value
-        .org
-        .or(Some(get_default_org()?))
-        .ok_or_else(|| anyhow::anyhow!("Org parameter is missing"))
-}
-
 fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
     value
         .path
@@ -34,24 +29,10 @@ fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
         .and_then(|path| Ok(path.to_owned()))
 }
 
-async fn treat_api_err<T: DeserializeOwned>(response: Response) -> Result<T> {
-    if let Err(err) = response.error_for_status_ref() {
-        let status = err.status();
-        let text = response.text().await?;
-
-        return Err(anyhow!(
-            "Request failed with status {}: {}",
-            status.unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
-            text
-        ));
-    }
-
-    Ok(response.json::<T>().await?)
-}
-
 fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
-    let org = get_org(value.clone())?;
-    let url = get_default_url()?;
+    // If no org, the default one is used
+    let org = get_org(value.org)?;
+    let url = get_url(org.borrow())?;
 
     Ok(format!(
         "{}/orgs/{}/repos/{}?env={}",
@@ -62,10 +43,17 @@ fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
 #[tokio::main]
 pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
     let path = get_env_path(value.clone())?;
+    let org = get_org(value.org.clone())?;
     let request_url = get_request_url(value)?;
 
-    let result =
-        treat_api_err::<PullResponse>(Client::new().get(&request_url).send().await?).await?;
+    let result = treat_api_err::<PullResponse>(
+        Client::new()
+            .get(&request_url)
+            .bearer_auth(get_access_token(org.borrow()).await?)
+            .send()
+            .await?,
+    )
+    .await?;
 
     let env = BASE64_STANDARD
         .decode(&result.file)
@@ -82,6 +70,7 @@ pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
     let path = get_env_path(value.clone())?;
     let content = std::fs::read_to_string(path.clone())
         .with_context(|| format!("Could not read file `{}`", path))?;
+    let org = get_org(value.org.clone())?;
     let request_url = get_request_url(value)?;
     let request_body = json!({
         "b64String": BASE64_STANDARD.encode(content)
@@ -90,6 +79,7 @@ pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
     let result = treat_api_err::<PushResponse>(
         Client::new()
             .post(request_url)
+            .bearer_auth(get_access_token(org.borrow()).await?)
             .header(CONTENT_TYPE, "application/json")
             .json(&request_body)
             .send()
