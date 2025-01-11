@@ -33,4 +33,4 @@ The CLI saves all the configurations in the `~/.moonenv/config` file. Its struct
 
 ## Contributing
 
-Refer to our [contribution guidelines](https://github.com/PBH-Tech/moonenv/blob/main/.github/CONTRIBUTING.md) and [Code of Conduct for contributors](https://github.com/PBH-Tech/moonenv/blob/main/CODE_OF_CONDUCT.md).
+Refer to our [contribution guidelines](https://github.com/PBH-Tech/moonenv/blob/main/CONTRIBUTING.md) and [Code of Conduct for contributors](https://github.com/PBH-Tech/moonenv/blob/main/CODE_OF_CONDUCT.md).
