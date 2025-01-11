@@ -46,7 +46,7 @@ func main() {
 		BucketName: config.BucketName,
 	})
 
-	tokenCodeTable := stacks.NewTableStack(app, "MoonenvTokenCodeTable", &stacks.CdkTableStackProps{
+	tokenCodeTable := stacks.NewTableStack(app, "MoonenvDynamoDb", &stacks.CdkTableStackProps{
 		StackProps: awscdk.StackProps{
 			Env:       env(),
 			StackName: jsii.String("moonenv-token-code-table"),
