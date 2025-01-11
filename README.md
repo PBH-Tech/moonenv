@@ -30,3 +30,11 @@ The CLI saves all the configurations in the `~/.moonenv/config` file. Its struct
   - access_token_expires_at: Access token expiration time.
   - refresh_token: Token to access a new access token when it is expired.
   - client_id: The OAuth client ID for the CLI tool.
+
+# Running the server
+
+IN PROGRESS
+
+# Contributing
+
+Refer to our contribution guidelines and [Code of Conduct for contributors](https://github.com/PBH-Tech/moonenv/blob/main/CODE_OF_CONDUCT.md).
