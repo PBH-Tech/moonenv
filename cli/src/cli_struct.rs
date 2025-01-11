@@ -88,7 +88,7 @@ pub struct ConfigVariableUpsert {
 
     #[clap(short, long)]
     /// The full URL to the server.
-    /// If provided, it should be a valid URL format, e.g., "https://example.com".
+    /// If provided, it should be a valid URL format, e.g., <https://example.com>.
     pub url: Option<String>,
 
     #[clap(short, long)]
