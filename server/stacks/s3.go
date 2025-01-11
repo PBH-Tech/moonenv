@@ -9,6 +9,7 @@ import (
 
 type CdkS3StackProps struct {
 	awscdk.StackProps
+	BucketName *string
 }
 
 func NewS3BucketStack(scope constructs.Construct, id string, props *CdkS3StackProps) awss3.Bucket {
@@ -20,7 +21,7 @@ func NewS3BucketStack(scope constructs.Construct, id string, props *CdkS3StackPr
 	stack := awscdk.NewStack(scope, &id, &sProps)
 
 	bucket := awss3.NewBucket(stack, jsii.String("moonenv-bucket"), &awss3.BucketProps{
-		BucketName: jsii.String("moonenv-bucket"),
+		BucketName: props.BucketName,
 		Versioned:  jsii.Bool(true),
 	})
 
