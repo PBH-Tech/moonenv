@@ -18,7 +18,7 @@ trait ConfigHandler {
         home.push(".moonenv");
         home.push("config");
 
-        Ok(home.clone())
+        Ok(home)
     }
 
     /// Saves the configuration
@@ -101,16 +101,15 @@ impl ConfigHandler for MoonenvConfig {}
 pub fn change_config(new_config: IndividualConfig) -> Result<()> {
     let default_path = MoonenvConfig::get_default_config_file_path()?;
     let mut moonenv_config = MoonenvConfig::get_config(default_path.clone())?;
-    let config_org = new_config.org.clone();
 
     if let Some(individual_config) = moonenv_config
         .profiles
         .iter_mut()
-        .find(|config| config.org == config_org)
+        .find(|config| config.org == new_config.org)
     {
         *individual_config = new_config;
     } else {
-        moonenv_config.profiles.push(new_config.clone());
+        moonenv_config.profiles.push(new_config);
     }
 
     MoonenvConfig::save_config(moonenv_config, default_path)?;

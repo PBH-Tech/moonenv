@@ -50,19 +50,18 @@ pub async fn login_handler(value: OrgActionAuthArgs) -> Result<()> {
     let url = get_url(&org)?;
     let client_id = get_client_id(&org)?;
     let uri = format!("{}/auth/token?client_id={}", url, client_id);
-    let set_of_token_result = Arc::new(
-        treat_api_err::<OAuthSetOfTokenResult>(Client::new().get(&uri).send().await?).await?,
-    );
+    let set_of_token_result =
+        treat_api_err::<OAuthSetOfTokenResult>(Client::new().get(&uri).send().await?).await?;
     open::that(format!("https://{}", set_of_token_result.authorization_uri))?;
     let org_clone = Arc::clone(&org);
-    let set_of_token_result_clone = Arc::clone(&set_of_token_result);
-    let login_result = spawn(move || fetch_login_result(set_of_token_result_clone, &org_clone))
-        .join()
-        .map_err(|e| anyhow::Error::msg(format!("Login failed: {:?}", e)))??;
+    let (set_of_token_result, login_result) =
+        spawn(move || fetch_login_result(set_of_token_result, &org_clone))
+            .join()
+            .map_err(|e| anyhow::Error::msg(format!("Login failed: {:?}", e)))??;
     let mut config = config_handler::get_config(&org)?;
 
     config.access_token = Some(login_result.id_token); // TODO: weird, but access token is ID Token
-    config.device_code = Some(set_of_token_result.device_code.clone());
+    config.device_code = Some(set_of_token_result.device_code);
     config.refresh_token = Some(login_result.refresh_token);
     config.access_token_expires_at = Some(get_expires_at(login_result.expires_in)?);
 
@@ -73,9 +72,9 @@ pub async fn login_handler(value: OrgActionAuthArgs) -> Result<()> {
 
 #[tokio::main]
 async fn fetch_login_result(
-    set_of_token_result: Arc<OAuthSetOfTokenResult>,
+    set_of_token_result: OAuthSetOfTokenResult,
     org: &str,
-) -> Result<OAuthTokenResult> {
+) -> Result<(OAuthSetOfTokenResult, OAuthTokenResult)> {
     let url = get_url(org)?;
     let client_id = get_client_id(org)?;
     let uri = format!(
@@ -98,7 +97,7 @@ async fn fetch_login_result(
         }
     }
 
-    Ok(token_result)
+    Ok((set_of_token_result, token_result))
 }
 
 pub async fn get_access_token(org: &str) -> Result<String> {
