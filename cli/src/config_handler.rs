@@ -13,13 +13,12 @@ use std::{borrow::Borrow, path::PathBuf, time::Duration};
 trait ConfigHandler {
     /// Returns the file path for the configuration file
     fn get_default_config_file_path() -> Result<PathBuf> {
-        let home = home_dir().ok_or_else(|| anyhow!("HOME environment variable not set"))?;
-        let mut config_path: PathBuf = PathBuf::from(home);
+        let mut home = home_dir().ok_or_else(|| anyhow!("HOME environment variable not set"))?;
 
-        config_path.push(".moonenv");
-        config_path.push("config");
+        home.push(".moonenv");
+        home.push("config");
 
-        Ok(config_path.clone())
+        Ok(home.clone())
     }
 
     /// Saves the configuration
@@ -30,7 +29,9 @@ trait ConfigHandler {
     }
 
     /// Returns the configuration
-    fn get_config(path: PathBuf) -> Result<MoonenvConfig>;
+    fn get_config(config_path: PathBuf) -> Result<MoonenvConfig> {
+        confy::load_path(config_path).map_err(|e| anyhow!("Failed to load configuration: {}", e))
+    }
 }
 
 /// The configuration struct, responsible to informs the default profile and all profiles that are available
@@ -91,12 +92,7 @@ impl ::std::default::Default for MoonenvConfig {
     }
 }
 
-impl ConfigHandler for MoonenvConfig {
-    fn get_config(config_path: PathBuf) -> Result<MoonenvConfig> {
-        return confy::load_path(config_path)
-            .map_err(|e| anyhow!("Failed to load configuration: {}", e));
-    }
-}
+impl ConfigHandler for MoonenvConfig {}
 
 /// Change an individual configuration;
 /// If it already exists, so it overwrites;
@@ -117,7 +113,7 @@ pub fn change_config(new_config: IndividualConfig) -> Result<()> {
         moonenv_config.profiles.push(new_config.clone());
     }
 
-    let _ = MoonenvConfig::save_config(moonenv_config, default_path)?;
+    MoonenvConfig::save_config(moonenv_config, default_path)?;
 
     Ok(())
 }
@@ -129,7 +125,7 @@ pub fn set_config_name_as_default(name: String) -> Result<()> {
 
     moonenv_config.default = Some(name);
 
-    let _ = MoonenvConfig::save_config(moonenv_config, default_path)?;
+    MoonenvConfig::save_config(moonenv_config, default_path)?;
 
     Ok(())
 }
@@ -152,14 +148,14 @@ fn get_default_org() -> Result<String> {
 }
 
 /// Given a profile name, it will try to find the profile and return it
-pub fn get_config(org: &String) -> Result<IndividualConfig> {
+pub fn get_config(org: &str) -> Result<IndividualConfig> {
     let moonenv_config: MoonenvConfig =
         MoonenvConfig::get_config(MoonenvConfig::get_default_config_file_path()?)?;
 
     return moonenv_config
         .profiles
         .iter()
-        .find(|config| config.org.to_string() == *org)
+        .find(|config| config.org == *org)
         .ok_or_else(|| {
             anyhow::anyhow!(
                 "No profile found. Ensure a default profile is correctly set in the configuration."
@@ -178,7 +174,7 @@ pub fn get_org(org: Option<String>) -> Result<String> {
 
 /// Returns the API URL for a given profile name';
 /// If the parameter is None, then it tries to return the default API URL;
-pub fn get_url(org: &String) -> Result<String> {
+pub fn get_url(org: &str) -> Result<String> {
     let config = get_config(org)?;
 
     Ok(config.url.ok_or_else(|| {
@@ -188,7 +184,7 @@ pub fn get_url(org: &String) -> Result<String> {
 
 /// Returns the client ID for the given profile name;
 /// If the parameter is None, then it tries to return the default client ID
-pub fn get_client_id(org: &String) -> Result<String> {
+pub fn get_client_id(org: &str) -> Result<String> {
     let config = get_config(org)?;
 
     Ok(config.client_id.ok_or_else(|| {

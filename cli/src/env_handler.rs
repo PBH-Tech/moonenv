@@ -26,7 +26,7 @@ fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
         .path
         .to_str()
         .ok_or_else(|| anyhow::anyhow!("Invalid env path"))
-        .and_then(|path| Ok(path.to_owned()))
+        .map(|path| path.to_owned())
 }
 
 fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
@@ -56,7 +56,7 @@ pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
     .await?;
 
     let env = BASE64_STANDARD
-        .decode(&result.file)
+        .decode(result.file)
         .expect("Failed to decode base64 data");
     let mut file = File::create(path)?;
 
