@@ -1,6 +1,6 @@
 use crate::api_util::treat_api_err;
 use crate::auth_handler::get_access_token;
-use crate::cli_struct::{ConfigVariableOptions, RepoActionEnvArgs};
+use crate::cli_struct::{ConfigFileOptions, RepoActionEnvArgs};
 use crate::moonenv_config::{IndividualConfig, MoonenvConfig};
 use anyhow::{Context, Result};
 use base64::prelude::*;
@@ -104,11 +104,11 @@ impl RepoActionEnvArgs {
     }
 }
 
-impl ConfigVariableOptions {
-    pub fn execute(option: ConfigVariableOptions) -> Result<()> {
+impl ConfigFileOptions {
+    pub fn execute(option: ConfigFileOptions) -> Result<()> {
         match option {
-            ConfigVariableOptions::Default(value) => Self::set_config_name_as_default(value.name),
-            ConfigVariableOptions::Upsert(value) => Self::change_config(IndividualConfig {
+            ConfigFileOptions::Default(value) => Self::set_config_name_as_default(value.name),
+            ConfigFileOptions::Upsert(value) => Self::change_config(IndividualConfig {
                 org: value.org,
                 url: value.url,
                 access_token: None,

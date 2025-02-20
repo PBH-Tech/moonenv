@@ -1,7 +1,7 @@
 use anyhow::{Ok, Result};
 use auth_handler::login_handler;
 use clap::Parser;
-use cli_struct::{App, Command, ConfigVariableOptions, RepoActionEnvArgs};
+use cli_struct::{App, Command, ConfigFileOptions, RepoActionEnvArgs};
 
 mod api_util;
 mod auth_handler;
@@ -15,7 +15,7 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Pull(value) => RepoActionEnvArgs::new(value).pull_handler()?,
         Command::Push(value) => RepoActionEnvArgs::new(value).push_handler()?,
-        Command::Config(config_subcommand) => ConfigVariableOptions::execute(config_subcommand)?,
+        Command::Config(config_subcommand) => ConfigFileOptions::execute(config_subcommand)?,
         Command::Login(value) => login_handler(value)?,
     }
 
