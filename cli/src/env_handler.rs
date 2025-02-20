@@ -21,75 +21,85 @@ pub struct PullResponse {
     pub file: String,
 }
 
-fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
-    value
-        .path
-        .to_str()
-        .ok_or_else(|| anyhow::anyhow!("Invalid env path"))
-        .map(|path| path.to_owned())
-}
+impl RepoActionEnvArgs {
+    pub fn new(args: RepoActionEnvArgs) -> Self {
+        Self {
+            org: args.org,
+            env: args.env,
+            path: args.path,
+            repository: args.repository,
+        }
+    }
 
-fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
-    let mut moonenv_config = MoonenvConfig::new();
-    let org = moonenv_config.get_org(value.org)?;
-    let url = moonenv_config.get_url(org.borrow())?;
+    #[tokio::main]
+    pub async fn pull_handler(&mut self) -> Result<()> {
+        let mut moonenv_config = MoonenvConfig::new();
+        let path = self.get_env_path()?;
+        let org = moonenv_config.get_org(self.org.clone())?;
+        let request_url = self.get_request_url()?;
 
-    Ok(format!(
-        "{}/orgs/{}/repos/{}?env={}",
-        url, org, value.repository, value.env
-    ))
-}
+        let result = treat_api_err::<PullResponse>(
+            Client::new()
+                .get(&request_url)
+                .bearer_auth(get_access_token(org.borrow()).await?)
+                .send()
+                .await?,
+        )
+        .await?;
 
-#[tokio::main]
-pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
-    let mut moonenv_config = MoonenvConfig::new();
-    let path = get_env_path(value.clone())?;
-    let org = moonenv_config.get_org(value.org.clone())?;
-    let request_url = get_request_url(value)?;
+        let env = BASE64_STANDARD
+            .decode(result.file)
+            .expect("Failed to decode base64 data");
+        let mut file = File::create(path)?;
 
-    let result = treat_api_err::<PullResponse>(
-        Client::new()
-            .get(&request_url)
-            .bearer_auth(get_access_token(org.borrow()).await?)
-            .send()
-            .await?,
-    )
-    .await?;
+        file.write_all(&env)?;
 
-    let env = BASE64_STANDARD
-        .decode(result.file)
-        .expect("Failed to decode base64 data");
-    let mut file = File::create(path)?;
+        Ok(())
+    }
 
-    file.write_all(&env)?;
+    #[tokio::main]
+    pub async fn push_handler(&mut self) -> Result<()> {
+        let mut moonenv_config = MoonenvConfig::new();
+        let path = self.get_env_path()?;
+        let content = std::fs::read_to_string(path.clone())
+            .with_context(|| format!("Could not read file `{}`", path))?;
+        let org = moonenv_config.get_org(self.org.clone())?;
+        let request_url = self.get_request_url()?;
+        let request_body = json!({
+            "b64String": BASE64_STANDARD.encode(content)
+        });
 
-    Ok(())
-}
+        let result = treat_api_err::<PushResponse>(
+            Client::new()
+                .post(request_url)
+                .bearer_auth(get_access_token(org.borrow()).await?)
+                .header(CONTENT_TYPE, "application/json")
+                .json(&request_body)
+                .send()
+                .await?,
+        )
+        .await?;
 
-#[tokio::main]
-pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
-    let mut moonenv_config = MoonenvConfig::new();
-    let path = get_env_path(value.clone())?;
-    let content = std::fs::read_to_string(path.clone())
-        .with_context(|| format!("Could not read file `{}`", path))?;
-    let org = moonenv_config.get_org(value.org.clone())?;
-    let request_url = get_request_url(value)?;
-    let request_body = json!({
-        "b64String": BASE64_STANDARD.encode(content)
-    });
+        println!("{}", result.message);
 
-    let result = treat_api_err::<PushResponse>(
-        Client::new()
-            .post(request_url)
-            .bearer_auth(get_access_token(org.borrow()).await?)
-            .header(CONTENT_TYPE, "application/json")
-            .json(&request_body)
-            .send()
-            .await?,
-    )
-    .await?;
+        Ok(())
+    }
 
-    println!("{}", result.message);
+    fn get_env_path(&mut self) -> Result<String> {
+        self.path
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("Invalid env path"))
+            .map(|path| path.to_owned())
+    }
 
-    Ok(())
+    fn get_request_url(&mut self) -> Result<String> {
+        let mut moonenv_config = MoonenvConfig::new();
+        let org = moonenv_config.get_org(self.org.clone())?;
+        let url = moonenv_config.get_url(org.borrow())?;
+
+        Ok(format!(
+            "{}/orgs/{}/repos/{}?env={}",
+            url, org, self.repository, self.env
+        ))
+    }
 }

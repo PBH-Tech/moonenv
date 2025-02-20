@@ -1,8 +1,7 @@
 use anyhow::{Ok, Result};
 use auth_handler::login_handler;
 use clap::Parser;
-use cli_struct::{App, Command, ConfigVariableOptions};
-use env_handler::{pull_handler, push_handler};
+use cli_struct::{App, Command, ConfigVariableOptions, RepoActionEnvArgs};
 use moonenv_config::{IndividualConfig, MoonenvConfig};
 
 mod api_util;
@@ -16,8 +15,8 @@ fn main() -> Result<()> {
     let mut moonenv_config = MoonenvConfig::new();
 
     match cli.command {
-        Command::Pull(value) => pull_handler(value)?,
-        Command::Push(value) => push_handler(value)?,
+        Command::Pull(value) => RepoActionEnvArgs::new(value).pull_handler()?,
+        Command::Push(value) => RepoActionEnvArgs::new(value).push_handler()?,
         Command::Config(config_subcommand) => match config_subcommand {
             ConfigVariableOptions::Default(value) => {
                 moonenv_config.set_config_name_as_default(value.name)?
