@@ -1,7 +1,7 @@
 use crate::api_util::treat_api_err;
 use crate::auth_handler::get_access_token;
-use crate::cli_struct::RepoActionEnvArgs;
-use crate::moonenv_config::MoonenvConfig;
+use crate::cli_struct::{ConfigVariableOptions, RepoActionEnvArgs};
+use crate::moonenv_config::{IndividualConfig, MoonenvConfig};
 use anyhow::{Context, Result};
 use base64::prelude::*;
 use reqwest::{header::CONTENT_TYPE, Client};
@@ -101,5 +101,36 @@ impl RepoActionEnvArgs {
             "{}/orgs/{}/repos/{}?env={}",
             url, org, self.repository, self.env
         ))
+    }
+}
+
+impl ConfigVariableOptions {
+    pub fn execute(option: ConfigVariableOptions) -> Result<()> {
+        match option {
+            ConfigVariableOptions::Default(value) => Self::set_config_name_as_default(value.name),
+            ConfigVariableOptions::Upsert(value) => Self::change_config(IndividualConfig {
+                org: value.org,
+                url: value.url,
+                access_token: None,
+                access_token_expires_at: None,
+                device_code: None,
+                refresh_token: None,
+                client_id: value.client_id,
+            }),
+        }
+    }
+
+    fn set_config_name_as_default(name: String) -> Result<()> {
+        let mut moonenv_config = MoonenvConfig::new();
+        moonenv_config.set_config_name_as_default(name)?;
+
+        Ok(())
+    }
+
+    fn change_config(config: IndividualConfig) -> Result<()> {
+        let mut moonenv_config = MoonenvConfig::new();
+        moonenv_config.change_config(config)?;
+
+        Ok(())
     }
 }
