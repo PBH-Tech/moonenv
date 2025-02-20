@@ -1,7 +1,7 @@
 use crate::api_util::treat_api_err;
 use crate::auth_handler::get_access_token;
 use crate::cli_struct::RepoActionEnvArgs;
-use crate::config_handler::{get_org, get_url};
+use crate::moonenv_config::MoonenvConfig;
 use anyhow::{Context, Result};
 use base64::prelude::*;
 use reqwest::{header::CONTENT_TYPE, Client};
@@ -30,9 +30,9 @@ fn get_env_path(value: RepoActionEnvArgs) -> Result<String> {
 }
 
 fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
-    // If no org, the default one is used
-    let org = get_org(value.org)?;
-    let url = get_url(org.borrow())?;
+    let mut moonenv_config = MoonenvConfig::new();
+    let org = moonenv_config.get_org(value.org)?;
+    let url = moonenv_config.get_url(org.borrow())?;
 
     Ok(format!(
         "{}/orgs/{}/repos/{}?env={}",
@@ -42,8 +42,9 @@ fn get_request_url(value: RepoActionEnvArgs) -> Result<String> {
 
 #[tokio::main]
 pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
+    let mut moonenv_config = MoonenvConfig::new();
     let path = get_env_path(value.clone())?;
-    let org = get_org(value.org.clone())?;
+    let org = moonenv_config.get_org(value.org.clone())?;
     let request_url = get_request_url(value)?;
 
     let result = treat_api_err::<PullResponse>(
@@ -67,10 +68,11 @@ pub async fn pull_handler(value: RepoActionEnvArgs) -> Result<()> {
 
 #[tokio::main]
 pub async fn push_handler(value: RepoActionEnvArgs) -> Result<()> {
+    let mut moonenv_config = MoonenvConfig::new();
     let path = get_env_path(value.clone())?;
     let content = std::fs::read_to_string(path.clone())
         .with_context(|| format!("Could not read file `{}`", path))?;
-    let org = get_org(value.org.clone())?;
+    let org = moonenv_config.get_org(value.org.clone())?;
     let request_url = get_request_url(value)?;
     let request_body = json!({
         "b64String": BASE64_STANDARD.encode(content)
