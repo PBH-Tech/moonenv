@@ -27,3 +27,6 @@ confy = { version = "0.6.1", features = [
 ], default-features = false }
 dirs = "5.0.1"
 open = "5.3.1"
+
+[dev-dependencies]
+tempfile = "3"

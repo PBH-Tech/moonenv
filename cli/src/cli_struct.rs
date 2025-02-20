@@ -19,7 +19,7 @@ pub enum Command {
 
     #[clap(subcommand)]
     /// Changes the application's configuration settings.
-    Config(ConfigVariableOptions),
+    Config(ConfigFileOptions),
 
     /// Initiates a login process by redirecting to the login page on the browser
     Login(OrgActionAuthArgs),
@@ -71,24 +71,24 @@ pub struct OrgActionAuthArgs {
 }
 
 #[derive(Subcommand, Debug)]
-pub enum ConfigVariableOptions {
+pub enum ConfigFileOptions {
     /// Creates or updates a profile with specified settings.
     /// Use this command to either create a new profile or update an existing one with new values.
-    Upsert(ConfigVariableUpsert),
+    Upsert(ConfigFileUpsertArgs),
 
     /// Sets the currently selected profile as the default for the application.
     /// This command will modify the application's settings so that the specified profile
-    Default(ConfigVariableChangeDefault),
+    Default(ConfigFileChangeDefaultArgs),
 }
 
 #[derive(Args, Debug)]
-pub struct ConfigVariableUpsert {
+pub struct ConfigFileUpsertArgs {
     /// The org identifier for this configuration.
     pub org: String,
 
     #[clap(short, long)]
     /// The full URL to the server.
-    /// If provided, it should be a valid URL format, e.g., "https://example.com".
+    /// If provided, it should be a valid URL format, e.g., <https://example.com>.
     pub url: Option<String>,
 
     #[clap(short, long)]
@@ -97,7 +97,7 @@ pub struct ConfigVariableUpsert {
 }
 
 #[derive(Args, Debug)]
-pub struct ConfigVariableChangeDefault {
+pub struct ConfigFileChangeDefaultArgs {
     /// The name of the profile to set as default.
     pub name: String,
 }
